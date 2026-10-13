@@ -4,6 +4,10 @@ pragma solidity ^0.8.24;
 import {AgenticProofRegistry} from "../src/AgenticProofRegistry.sol";
 import {AgenticSpendingVault} from "../src/AgenticSpendingVault.sol";
 
+interface SpendingVm {
+    function prank(address) external;
+}
+
 contract MockToken {
     mapping(address => uint256) public balanceOf;
 
@@ -23,12 +27,15 @@ contract MockToken {
 }
 
 contract AgenticSpendingVaultTest {
+    SpendingVm private constant vm = SpendingVm(address(uint160(uint256(keccak256("hevm cheat code")))));
+
     AgenticProofRegistry private registry;
     AgenticSpendingVault private vault;
     MockToken private token;
 
     address private constant RECIPIENT = address(0xA11CE);
     address private constant OTHER_RECIPIENT = address(0xB0B);
+    address private constant OTHER_EXECUTOR = address(0xE11E);
     bytes32 private constant AGENT_ID = keccak256("agentic-spending-vault");
     bytes32 private constant METADATA_HASH = keccak256("agentic-spending-vault:v1");
     bytes32 private constant TRACE_ROOT = keccak256("trace:payment");
@@ -169,6 +176,39 @@ contract AgenticSpendingVaultTest {
         (bool replay,) = _execute(authId, RECIPIENT, 100, RESOURCE, 42);
         require(!replay, "replay must fail");
         require(token.balanceOf(RECIPIENT) == 100, "replay moved funds");
+    }
+
+    function testCumulativeBudgetRejectsMultiplePaymentsAboveTotalCap() public {
+        bytes32 authId = _grantPayment(RECIPIENT, 400_000_000, false, 10);
+        (bool first,) = _execute(authId, RECIPIENT, 250_000_000, RESOURCE, 1);
+        require(first, "first payment should succeed");
+        require(vault.authorizationSpent(authId) == 250_000_000, "spent total mismatch");
+
+        (bool second,) = _execute(authId, RECIPIENT, 151_000_000, RESOURCE, 2);
+        require(!second, "cumulative cap must reject overspend");
+        require(token.balanceOf(RECIPIENT) == 250_000_000, "overspend moved funds");
+        require(vault.authorizationSpent(authId) == 250_000_000, "failed payment changed spent total");
+    }
+
+    function testUnauthorizedCallerCannotConsumeSingleUse() public {
+        bytes32 authId = _grantPayment(RECIPIENT, 400_000_000, true, 11);
+        vm.prank(OTHER_EXECUTOR);
+        (bool unauthorized,) = _execute(authId, RECIPIENT, 100, RESOURCE, 1);
+        require(!unauthorized, "unknown caller must not execute");
+        require(token.balanceOf(RECIPIENT) == 0, "unauthorized caller moved funds");
+        require(vault.authorizationSpent(authId) == 0, "unauthorized caller consumed budget");
+
+        (bool ownerExecution,) = _execute(authId, RECIPIENT, 100, RESOURCE, 1);
+        require(ownerExecution, "owner should still execute single-use payment");
+    }
+
+    function testConfiguredExecutorCanExecute() public {
+        bytes32 authId = _grantPayment(RECIPIENT, 400_000_000, false, 12);
+        vault.setExecutor(OTHER_EXECUTOR);
+        vm.prank(OTHER_EXECUTOR);
+        (bool ok,) = _execute(authId, RECIPIENT, 361_000_000, RESOURCE, 1);
+        require(ok, "configured executor should execute");
+        require(token.balanceOf(RECIPIENT) == 361_000_000, "configured executor payment missing");
     }
 
     function testSingleUseAuthorizationRejectsSecondDistinctPayment() public {

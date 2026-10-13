@@ -69,6 +69,10 @@ Machine-readable payment/service challenges are treated as untrusted proposal in
 
 Capability manifests are declarations, not authority. Their deterministic hash can be used as an agent `metadataHash` so another application can compare an advertised role/capability set with registry metadata, but the manifest cannot grant itself permissions. User authorization, deterministic policy and contract checks remain the enforcement boundaries.
 
+### Smart spending vault boundary
+
+`AgenticSpendingVault` is a stricter fund-boundary executor for `PAY_SERVICE`. The vault itself is the registered APP agent; it accepts execution only from the owner or an owner-selected executor, then checks the owner authorization, action type, recipient/token/resource scope, revocation/expiry, per-call amount and cumulative amount already spent under that authorization. The vault marks replay state and cumulative spend before recording the APP action and transferring funds; EVM atomicity rolls all of those effects back if proof recording or token/native transfer fails. Emergency withdrawals remain owner-only. The vault is currently local/tested and is not presented as part of the canonical live Monad deployment until separately deployed.
+
 ## Replay and ambiguity
 
 - Authorization nonces are unique per user.

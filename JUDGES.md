@@ -73,7 +73,7 @@ This is intentional security behavior: APP does not expose a public signing agen
 
 - Core TypeScript/Bun suite: **56/56 PASS** in the current release candidate, including an in-memory MCP protocol client that lists the exact safe tool surface, proves `$361 → ALLOW` / `$401 → BLOCK`, adapts a commerce challenge through the non-signing prepare path, and verifies Solidity-compatible spending-scope commitments.
 - Packaged SDK smoke suite: **3/3 PASS**; `npm pack --dry-run` produces the `@agentic-proof/sdk@0.1.0` artifact with runtime bundle, type declarations and quick-start README without publishing it.
-- Foundry contract suite: **21/21 PASS**: 11 registry tests plus 10 `AgenticSpendingVault` tests covering authorized ERC-20 payment + atomic proof recording, wrong recipient, over-cap amount, revoked authorization, replay, single-use reuse, tampered resource, wrong action type, frozen agent, and SDK/Solidity scope-vector parity.
+- Foundry contract suite: **24/24 PASS**: 11 registry tests plus 13 `AgenticSpendingVault` tests covering authorized ERC-20 payment + atomic proof recording, wrong recipient, per-call over-cap amount, cumulative authorization-budget overspend, revoked authorization, replay, single-use reuse, unauthorized executor/front-run protection, configured executor execution, tampered resource, wrong action type, frozen agent, and SDK/Solidity scope-vector parity.
 - `bun run typecheck`, `bun run lint`, and `bun run build`: PASS in the current release candidate.
 - Public backend write route is blocked; hosted agent reports `signerReady=false`.
 - The verifier reads Monad RPC directly rather than trusting the agent backend to declare itself valid.

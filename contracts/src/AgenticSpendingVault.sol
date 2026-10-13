@@ -44,6 +44,7 @@ contract AgenticSpendingVault {
     address public immutable owner;
     IAgenticProofRegistry public immutable registry;
     bytes32 public immutable agentId;
+    address public executor;
 
     struct PaymentExecution {
         address token;
@@ -58,8 +59,10 @@ contract AgenticSpendingVault {
 
     bool private entered;
     mapping(bytes32 => bool) public paymentExecuted;
+    mapping(bytes32 => uint256) public authorizationSpent;
 
     error NotOwner();
+    error NotExecutor();
     error ZeroAddress();
     error InvalidAgentId();
     error InvalidAuthorization();
@@ -71,6 +74,7 @@ contract AgenticSpendingVault {
     error AuthorizationNotYetValid();
     error AuthorizationExpired();
     error AmountExceedsAuthorization();
+    error CumulativeBudgetExceeded();
     error PaymentAlreadyExecuted();
     error InsufficientNativeBalance();
     error NativeTransferFailed();
@@ -78,6 +82,7 @@ contract AgenticSpendingVault {
     error Reentrancy();
 
     event NativeDeposited(address indexed from, uint256 amount);
+    event ExecutorChanged(address indexed previousExecutor, address indexed newExecutor);
     event AuthorizedPaymentExecuted(
         bytes32 indexed actionId,
         bytes32 indexed authorizationId,
@@ -95,6 +100,11 @@ contract AgenticSpendingVault {
         _;
     }
 
+    modifier onlyExecutor() {
+        if (msg.sender != owner && msg.sender != executor) revert NotExecutor();
+        _;
+    }
+
     modifier nonReentrant() {
         if (entered) revert Reentrancy();
         entered = true;
@@ -106,6 +116,7 @@ contract AgenticSpendingVault {
         if (registry_ == address(0)) revert ZeroAddress();
         if (agentId_ == bytes32(0)) revert InvalidAgentId();
         owner = msg.sender;
+        executor = msg.sender;
         registry = IAgenticProofRegistry(registry_);
         agentId = agentId_;
         registry.registerAgent(agentId_, metadataHash_);
@@ -121,6 +132,13 @@ contract AgenticSpendingVault {
 
     function setAgentActive(bool active) external onlyOwner {
         registry.setAgentActive(agentId, active);
+    }
+
+    function setExecutor(address newExecutor) external onlyOwner {
+        if (newExecutor == address(0)) revert ZeroAddress();
+        address previous = executor;
+        executor = newExecutor;
+        emit ExecutorChanged(previous, newExecutor);
     }
 
     function resourceHash(string calldata resource) public pure returns (bytes32) {
@@ -187,7 +205,7 @@ contract AgenticSpendingVault {
         string calldata resource,
         uint256 paymentNonce,
         bytes32 traceRoot
-    ) external nonReentrant returns (bytes32 actionId, bytes32 actionHash) {
+    ) external onlyExecutor nonReentrant returns (bytes32 actionId, bytes32 actionHash) {
         if (recipient == address(0)) revert ZeroAddress();
 
         PaymentExecution memory payment;
@@ -221,6 +239,7 @@ contract AgenticSpendingVault {
         );
 
         paymentExecuted[payment.actionId] = true;
+        authorizationSpent[authorizationId] += amount;
         _recordAndTransfer(authorizationId, traceRoot, payment);
 
         return (payment.actionId, payment.actionHash);
@@ -236,6 +255,8 @@ contract AgenticSpendingVault {
         if (block.timestamp < auth.validAfter) revert AuthorizationNotYetValid();
         if (block.timestamp > auth.validUntil) revert AuthorizationExpired();
         if (amount > auth.maxValue) revert AmountExceedsAuthorization();
+        uint256 spent = authorizationSpent[authorizationId];
+        if (spent > auth.maxValue - amount) revert CumulativeBudgetExceeded();
         if (auth.scopeHash != scopeHash) revert AuthorizationScopeMismatch();
     }
 
