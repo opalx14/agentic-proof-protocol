@@ -1,0 +1,53 @@
+# Internal planning, agent instructions and submission operations (local only)
+/.agents/
+/.codex/
+/.claude/
+/.cursor/*
+!/.cursor/mcp.json
+AGENTS.md
+/PLAN.md
+/docs/DEMO.md
+/docs/RELEASE_CHECKLIST.md
+/docs/SUBMISSION.md
+/render.yaml
+
+# Dependencies, build output and tool caches
+node_modules/
+dist/
+.next/
+.turbo/
+.cache/
+.vite/
+coverage/
+*.tsbuildinfo
+web/next-env.d.ts
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Local data, logs and recordings
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+/recordings/
+
+# Secrets: keep safe, public templates are permitted
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.jks
+keystore/
+keystores/
+
+# OS and editor artifacts
+.DS_Store
+.idea/
+.vscode/
+*.swp
