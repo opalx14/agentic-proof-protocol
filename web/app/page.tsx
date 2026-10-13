@@ -1,5 +1,5 @@
-import App from '../src/App';
+import HomeLanding from '../src/HomeLanding';
 
 export default function HomePage() {
-  return <App />;
+  return <HomeLanding />;
 }
