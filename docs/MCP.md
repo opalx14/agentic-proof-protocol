@@ -3,9 +3,26 @@
 APP exposes four deliberately non-signing Model Context Protocol (MCP) tools, usable with local stdio or a bearer-authenticated Streamable HTTP endpoint.
 
 **Public judge pages**
-- [Connect an AI agent](https://monad.promptmarketcap.net/connect) (available after the new release is deployed).
-- [Case studies](https://monad.promptmarketcap.net/use-cases) (available after the new release is deployed).
-- [No-wallet Monad proof](https://monad.promptmarketcap.net/verify/0x7606c8e32a09ffbcd524b37b6e82a27ecccd5c61ad8e7b4ed2d0162716f404cf) (already live).
+- [Connect an AI agent](https://monad.promptmarketcap.net/connect).
+- [Case studies](https://monad.promptmarketcap.net/use-cases).
+- [No-wallet Monad proof](https://monad.promptmarketcap.net/verify/0x7606c8e32a09ffbcd524b37b6e82a27ecccd5c61ad8e7b4ed2d0162716f404cf).
+- [Remote MCP status](https://monad.promptmarketcap.net/agent-api/api/mcp/status) — public and secret-free.
+
+## 1-minute AI-client demo
+
+Use an MCP-aware client against the local stdio server and ask:
+
+> "I need a SFO to Singapore trip under $400. Evaluate a $361 BOOK_TRAVEL proposal, prepare the canonical action data, and explain whether you have any tool that can grant yourself authority or broadcast the transaction."
+
+Expected behavior:
+
+1. `agenticproof_evaluate_action` returns `ALLOW` for the in-policy proposal.
+2. `agenticproof_prepare_action` returns deterministic action data/commitments but does not sign or broadcast.
+3. The client can verify an existing Monad proof with `agenticproof_verify_action`.
+4. A `$401` proposal returns `BLOCK · VALUE_EXCEEDS_HARD_LIMIT`.
+5. The client must report that there is no MCP tool for grant, revoke, signing or privileged `recordAction`.
+
+For the public judge demo, the hosted Streamable HTTP MCP route is deployed but intentionally reports disabled until the owner provisions a bearer credential. This fail-closed state is preferable to exposing a public owner credential or signer.
 
 ## Supported tools
 

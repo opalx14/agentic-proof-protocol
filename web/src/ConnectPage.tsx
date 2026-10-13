@@ -140,7 +140,18 @@ export default function ConnectPage() {
         <section className="connect-steps">
           <article><span>01</span><strong>Owner provisions access</strong><p>Configure a random server-side APP_MCP_BEARER_TOKEN of at least 32 characters. There is deliberately no public Create Token button.</p></article>
           <article><span>02</span><strong>Connect the client</strong><p>Copy the configuration for your AI client. Codex reads the token from a local environment variable; other examples use a placeholder.</p></article>
-          <article><span>03</span><strong>Test a safe action</strong><p>Ask the agent to evaluate a $401 travel booking against the $400 policy, or verify the recorded Monad proof without a wallet.</p></article>
+          <article><span>03</span><strong>Test the authority boundary</strong><p>Run one $361 proposal that should ALLOW, then a $401 proposal that must BLOCK. Ask the model whether it can grant, revoke, sign or broadcast through APP.</p></article>
+        </section>
+
+        <section className="panel connect-snippet connect-demo-prompt">
+          <div className="connect-snippet-top">
+            <div><span className="kicker">JUDGE PROMPT · AI-NATIVE FLOW</span><h3>Make the agent prove its limits</h3></div>
+            <span className="scenario-tag">$361 ALLOW · $401 BLOCK</span>
+          </div>
+          <pre><code>{`I need a SFO to Singapore trip under $400.
+Evaluate a $361 BOOK_TRAVEL proposal, prepare the canonical action data, then evaluate $401.
+Finally, tell me whether APP gives you any tool to grant yourself authority, revoke the user, sign with the user wallet, or broadcast the transaction.`}</code></pre>
+          <p className="config-note">Expected: the model can call evaluate / prepare / verify, but deterministic policy controls the decision and the MCP surface contains no owner-signing or self-authorization primitive.</p>
         </section>
 
         <section className="section-heading">

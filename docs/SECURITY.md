@@ -48,6 +48,19 @@ Model output is treated as untrusted proposal data. The TypeScript policy engine
 
 The Solidity contract is the final chain-side enforcement boundary for recorded actions. Local policy cannot override contract authorization state.
 
+### AI / MCP privilege boundary
+
+The AI integration is intentionally capability-limited. The model may help reason about a request, but it is not trusted with owner authority.
+
+| Allowed to AI / MCP | Not exposed to AI / MCP |
+| --- | --- |
+| Read public protocol status | Grant or widen authorization |
+| Evaluate a typed proposal under deterministic policy | Revoke user authorization |
+| Prepare deterministic action data and commitments | Access a user private key or wallet signer |
+| Verify an existing onchain proof | Broadcast or privileged `recordAction` execution |
+
+The MCP surface therefore contains exactly four non-signing tools: `agenticproof_get_status`, `agenticproof_evaluate_action`, `agenticproof_prepare_action`, and `agenticproof_verify_action`. A compromised or hallucinating model cannot obtain an owner-signing primitive from APP MCP because that primitive is not part of the tool surface.
+
 ## Replay and ambiguity
 
 - Authorization nonces are unique per user.
