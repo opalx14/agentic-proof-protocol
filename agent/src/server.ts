@@ -12,6 +12,7 @@ import {
   ProposedActionSchema,
   buildAuthorizationTypedData,
   createActionHash,
+  createAgentManifestHash,
   createRegistryReader,
   createScopeHash,
   defaultPolicy,
@@ -19,6 +20,7 @@ import {
   evaluatePolicy,
   hashActionType,
   hashEvmValue,
+  referenceAgentManifest,
   type Address,
   type Hex32,
   type PolicyDecision,
@@ -78,6 +80,8 @@ export function buildServer(config: AppConfig = loadConfig()) {
     ? privateKeyToAccount(config.APP_AGENT_PRIVATE_KEY as `0x${string}`)
     : undefined;
   const agentAddress = (config.APP_AGENT_ADDRESS ?? account?.address ?? DEMO_AGENT) as Address;
+  const referenceManifest = referenceAgentManifest(agentAddress);
+  const referenceManifestHash = createAgentManifestHash(referenceManifest);
   const store = new Store(defaultPolicy(agentAddress));
   const audit = new AuditLog(config.APP_AUDIT_PATH);
 
@@ -144,6 +148,8 @@ export function buildServer(config: AppConfig = loadConfig()) {
     contractAddress: config.APP_CONTRACT_ADDRESS ?? null,
     explorerUrl: config.APP_EXPLORER_URL ?? null,
     agentAddress,
+    referenceAgentManifest: referenceManifest,
+    referenceAgentManifestHash: referenceManifestHash,
   }));
 
   app.get('/api/policy', async () => store.getPolicy());
@@ -172,11 +178,6 @@ export function buildServer(config: AppConfig = loadConfig()) {
     }
 
     const agentId = hashEvmValue({ namespace: 'agentic-proof', agent: agentAddress.toLowerCase() });
-    const metadataHash = hashEvmValue({
-      name: 'Agentic Proof Reference Agent',
-      version: '0.1.0',
-      role: 'reference-agent',
-    });
 
     try {
       const existing = await publicClient.readContract({
@@ -194,11 +195,17 @@ export function buildServer(config: AppConfig = loadConfig()) {
         address: config.APP_CONTRACT_ADDRESS as Address,
         abi: AGENTIC_PROOF_ABI,
         functionName: 'registerAgent',
-        args: [agentId, metadataHash],
+        args: [agentId, referenceManifestHash],
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-      audit.record('agent.registered', null, { agentId, txHash, status: receipt.status });
-      return { alreadyRegistered: false, agentId, txHash, status: receipt.status };
+      audit.record('agent.registered', null, {
+        agentId,
+        metadataHash: referenceManifestHash,
+        role: referenceManifest.role,
+        txHash,
+        status: receipt.status,
+      });
+      return { alreadyRegistered: false, agentId, metadataHash: referenceManifestHash, txHash, status: receipt.status };
     } catch (error) {
       return reply.code(502).send({ error: 'agent_registration_failed', message: safeError(error) });
     }

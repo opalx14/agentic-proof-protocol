@@ -1,0 +1,25 @@
+{
+  "name": "@agentic-proof/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for scoped AI-agent authorization, deterministic policy, commerce challenges and independent Monad proof verification.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist/", "index.d.ts", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target=node --format=esm --external viem --external zod",
+    "test": "bun run build && bun test test/sdk.test.ts",
+    "pack:check": "npm pack --dry-run"
+  },
+  "dependencies": {
+    "viem": "^2.40.0",
+    "zod": "^3.25.76"
+  }
+}

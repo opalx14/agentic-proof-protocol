@@ -2,6 +2,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import { commerceChallengeToAction } from '@agentic-proof/shared';
 
 export const TOOL_NAMES = [
   'agenticproof_get_status',
@@ -104,7 +105,7 @@ export function createServer(apiUrl = process.env.AGENTIC_PROOF_API_URL ?? 'http
     'agenticproof_prepare_action',
     {
       title: 'Prepare an action proof',
-      description: 'Create a deterministic action hash and transaction arguments after policy evaluation. Preparation does not sign or send a transaction.',
+      description: 'Create deterministic action data after policy evaluation. Accepts either a typed APP action or a machine-readable commerce challenge. Preparation never signs or sends a transaction.',
       inputSchema: {
         authorizationId: hex32,
         action: z.object({
@@ -118,16 +119,57 @@ export function createServer(apiUrl = process.env.AGENTIC_PROOF_API_URL ?? 'http
           expiresAt: z.string().datetime().optional(),
           traceRoot: hex32.optional(),
           idempotencyKey: z.string().trim().min(1).max(128).optional(),
-        }),
-        payload: z.unknown(),
+        }).optional(),
+        payload: z.unknown().optional(),
+        commerceChallenge: z.object({
+          version: z.literal('1'),
+          network: z.string().trim().min(1).max(64),
+          asset: z.string().trim().min(1).max(64),
+          payTo: z.string().trim().min(1).max(256),
+          amount: z.string().regex(/^\d+$/),
+          resource: z.string().trim().min(1).max(256),
+          requestId: z.string().trim().min(1).max(128).optional(),
+          expiresAt: z.string().datetime().nullable().optional(),
+        }).optional(),
+        commerceAgent: address.optional(),
+        commerceNonce: z.string().regex(/^\d+$/).optional(),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (input) => {
       try {
+        let requestBody: unknown;
+        if (input.commerceChallenge) {
+          if (!input.commerceAgent || !input.commerceNonce) {
+            return fail('invalid_commerce_challenge', 'commerceAgent and commerceNonce are required with commerceChallenge');
+          }
+          if (input.action !== undefined || input.payload !== undefined) {
+            return fail('ambiguous_prepare_input', 'provide either action + payload or commerceChallenge, not both');
+          }
+          const bundle = commerceChallengeToAction({
+            agent: input.commerceAgent,
+            nonce: input.commerceNonce,
+            challenge: input.commerceChallenge,
+          });
+          requestBody = {
+            authorizationId: input.authorizationId,
+            action: bundle.action,
+            payload: bundle.payload,
+          };
+        } else {
+          if (!input.action || input.payload === undefined) {
+            return fail('invalid_prepare_input', 'action and payload are required when commerceChallenge is not provided');
+          }
+          requestBody = {
+            authorizationId: input.authorizationId,
+            action: input.action,
+            payload: input.payload,
+          };
+        }
+
         return ok(await callApi(apiUrl, '/api/action/prepare', {
           method: 'POST',
-          body: JSON.stringify(input),
+          body: JSON.stringify(requestBody),
         }, fetchImpl));
       } catch (error) {
         return fail('prepare_failed', error instanceof Error ? error.message : String(error));

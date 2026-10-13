@@ -45,6 +45,24 @@ describe('agent API', () => {
     await app.close();
   });
 
+  it('publishes a specialist capability manifest and deterministic metadata hash', async () => {
+    const { app } = createTestServer();
+    const response = await app.inject({ method: 'GET', url: '/api/config' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.referenceAgentManifestHash).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(body.referenceAgentManifest).toMatchObject({
+      version: '1',
+      role: 'travel-procurement-commerce',
+    });
+    expect(body.referenceAgentManifest.capabilities.map((item: { actionType: string }) => item.actionType)).toEqual([
+      'BOOK_TRAVEL',
+      'PURCHASE_ITEM',
+      'PAY_SERVICE',
+    ]);
+    await app.close();
+  });
+
   it('turns an agent prompt into a schema-validated proposal that still obeys deterministic policy', async () => {
     const { app } = createTestServer();
     const scopeHash = createScopeHash({ origin: 'SGN', destination: 'SIN', tripType: 'round_trip', cabin: 'economy' });

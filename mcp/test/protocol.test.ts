@@ -23,6 +23,10 @@ function policyBackedFetch(): typeof fetch {
       return jsonResponse(evaluatePolicy(defaultPolicy(AGENT), action));
     }
 
+    if (url.pathname === '/api/action/prepare' && init?.method === 'POST') {
+      return jsonResponse({ prepared: true, request: JSON.parse(String(init.body)) });
+    }
+
     if (url.pathname === '/api/config') {
       return jsonResponse({ chainId: 10143, agentAddress: AGENT });
     }
@@ -89,6 +93,43 @@ describe('MCP protocol integration', () => {
       expect(allowedBody.verdict).toBe('ALLOW');
       expect(blockedBody.verdict).toBe('BLOCK');
       expect(blockedBody.code).toBe('VALUE_EXCEEDS_HARD_LIMIT');
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+
+  it('adapts a commerce payment challenge through the existing non-signing prepare tool', async () => {
+    const { client, server } = await connectClient();
+    try {
+      const result = await client.callTool({
+        name: 'agenticproof_prepare_action',
+        arguments: {
+          authorizationId: `0x${'33'.repeat(32)}`,
+          commerceAgent: AGENT,
+          commerceNonce: '9',
+          commerceChallenge: {
+            version: '1',
+            network: 'monad-testnet',
+            asset: 'USDC6',
+            payTo: 'merchant:demo-airline',
+            amount: '361000000',
+            resource: 'travel:SFO-SIN',
+            requestId: 'quote-361',
+          },
+        },
+      });
+
+      const content = result.content as Array<{ type: string; text?: string }>;
+      const body = JSON.parse(content.find((item) => item.type === 'text')?.text ?? '{}') as {
+        prepared?: boolean;
+        request?: { action?: ProposedAction; payload?: Record<string, unknown> };
+      };
+
+      expect(body.prepared).toBe(true);
+      expect(body.request?.action?.actionType).toBe('PAY_SERVICE');
+      expect(body.request?.action?.value).toBe('361000000');
+      expect(body.request?.payload?.kind).toBe('APP_COMMERCE_CHALLENGE');
     } finally {
       await client.close();
       await server.close();

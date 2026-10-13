@@ -1,4 +1,4 @@
-import type { Policy, PolicyDecision, ProposedAction } from '@agentic-proof/shared';
+import type { AgentManifest, Policy, PolicyDecision, ProposedAction } from '@agentic-proof/shared';
 
 export const AGENT_API_URL = process.env.NEXT_PUBLIC_AGENT_API_URL ?? '/agent-api';
 
@@ -21,6 +21,8 @@ export type RuntimeConfig = {
   contractAddress: `0x${string}` | null;
   explorerUrl: string | null;
   agentAddress: `0x${string}`;
+  referenceAgentManifest?: AgentManifest;
+  referenceAgentManifestHash?: `0x${string}`;
 };
 
 export function getRuntimeConfig() {

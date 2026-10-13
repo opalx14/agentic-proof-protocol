@@ -211,6 +211,7 @@
   .client-tab small { @apply mt-1 text-[10px] text-slate-500; }
   .client-tab.active { @apply border-violet-400/55 bg-violet-500/[0.12]; }
   .connect-snippet { @apply min-w-0 p-[18px]; }
+  .connect-demo-prompt { @apply mb-14; }
   .connect-snippet-top { @apply flex items-center justify-between gap-3; }
   .connect-snippet-top h3 { @apply mt-1.5 text-[21px]; }
   .connect-snippet pre { @apply mt-4 min-h-[190px] whitespace-pre-wrap break-all rounded-xl border border-white/10 bg-[#080b10] p-4 font-mono text-xs leading-7 text-violet-200; }
@@ -229,7 +230,7 @@
   .connect-bottom h2 { @apply my-2 text-[23px]; }
   .connect-bottom p { @apply m-0 max-w-[710px] text-xs leading-7 text-app-muted; }
 
-  .case-overview { @apply mb-8 grid grid-cols-4 gap-3; }
+  .case-overview { @apply mb-8 grid grid-cols-3 gap-3; }
   .case-overview-card { @apply flex min-h-[212px] flex-col items-start gap-2.5 rounded-2xl border border-white/10 bg-gradient-to-br from-[#141a25] to-[#0a0d13] p-[18px] no-underline hover:border-violet-400/50; }
   .case-overview-card > svg { @apply mt-2.5 text-violet-300; }
   .case-overview-card strong { @apply text-sm; }

@@ -5,4 +5,6 @@ export * from './typed-data';
 export * from './contract';
 export * from './client';
 export * from './examples';
+export * from './commerce';
+export * from './agent-manifest';
 export * from './trust';

@@ -1,4 +1,5 @@
 import { createScopeHash } from './hash';
+import { createAgentManifest, type AgentManifest } from './agent-manifest';
 import type { Address, Policy, ProposedAction } from './types';
 
 export type ReferenceScenario = {
@@ -49,6 +50,18 @@ export const REFERENCE_SCENARIOS = [
   TRAVEL_REFERENCE_SCENARIO,
   PROCUREMENT_REFERENCE_SCENARIO,
 ] as const;
+
+export function referenceAgentManifest(agentAddress: Address): AgentManifest {
+  return createAgentManifest(agentAddress, {
+    name: 'Agentic Proof Reference Agent',
+    role: 'travel-procurement-commerce',
+    capabilities: [
+      { actionType: 'BOOK_TRAVEL', description: 'Book travel inside a user-authorized route, budget and time window.' },
+      { actionType: 'PURCHASE_ITEM', description: 'Purchase an approved catalog item inside a user-owned procurement scope.' },
+      { actionType: 'PAY_SERVICE', description: 'Prepare a policy-governed machine-readable service payment challenge.' },
+    ],
+  });
+}
 
 export function policyForScenario(agentAddress: Address, scenario: ReferenceScenario): Policy {
   return {

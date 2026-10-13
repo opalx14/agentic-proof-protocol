@@ -10,8 +10,10 @@ import {
 } from 'viem';
 import {
   AGENTIC_PROOF_ABI,
+  createAgentManifestHash,
   createRegistryReader,
   hashEvmValue,
+  referenceAgentManifest,
   type Address,
   type Hex32,
 } from '@agentic-proof/shared';
@@ -144,11 +146,7 @@ export async function registerConnectedWalletAgent(): Promise<{
   if (!config) throw new Error('Deploy or configure the registry first');
   const { wallet, account } = await connectedWallet();
   const agentId = hashEvmValue({ namespace: 'agentic-proof', agent: account.toLowerCase() });
-  const metadataHash = hashEvmValue({
-    name: 'Agentic Proof Reference Agent',
-    version: '0.1.0',
-    role: 'reference-agent',
-  });
+  const metadataHash = createAgentManifestHash(referenceAgentManifest(account as Address));
   const hash = await wallet.writeContract({
     account,
     chain: null,

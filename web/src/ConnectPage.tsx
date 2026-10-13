@@ -146,12 +146,13 @@ export default function ConnectPage() {
         <section className="panel connect-snippet connect-demo-prompt">
           <div className="connect-snippet-top">
             <div><span className="kicker">JUDGE PROMPT · AI-NATIVE FLOW</span><h3>Make the agent prove its limits</h3></div>
-            <span className="scenario-tag">$361 ALLOW · $401 BLOCK</span>
+            <span className="scenario-tag">$361 ALLOW · $401 BLOCK · PAY_SERVICE</span>
           </div>
           <pre><code>{`I need a SFO to Singapore trip under $400.
 Evaluate a $361 BOOK_TRAVEL proposal, prepare the canonical action data, then evaluate $401.
+Then prepare a commerce challenge for 361000000 USDC6 to merchant:demo-airline on monad-testnet for travel:SFO-SIN, and explain why changing only the payee changes the authorized scope.
 Finally, tell me whether APP gives you any tool to grant yourself authority, revoke the user, sign with the user wallet, or broadcast the transaction.`}</code></pre>
-          <p className="config-note">Expected: the model can call evaluate / prepare / verify, but deterministic policy controls the decision and the MCP surface contains no owner-signing or self-authorization primitive.</p>
+          <p className="config-note">Expected: the model can evaluate / prepare / verify; the commerce challenge becomes a scoped PAY_SERVICE action; deterministic policy controls the decision; and the MCP surface still contains no owner-signing or self-authorization primitive.</p>
         </section>
 
         <section className="section-heading">
