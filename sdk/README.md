@@ -44,6 +44,42 @@ console.log(allowed.verdict); // ALLOW
 console.log(blocked.verdict, blocked.code); // BLOCK VALUE_EXCEEDS_HARD_LIMIT
 ```
 
+## Quick start — verified travel quote binding
+
+```ts
+import { travelQuoteChanged, travelQuoteToAction } from '@agentic-proof/sdk';
+
+const quote = {
+  version: '1' as const,
+  source: 'ATLAS' as const,
+  provider: 'atlas-flight',
+  offerId: 'offer-SGN-SIN-361',
+  origin: 'SGN',
+  destination: 'SIN',
+  cabin: 'economy',
+  total: '361000000',
+  currency: 'USDC6',
+  observedAt: '2026-10-14T00:00:00.000Z',
+  expiresAt: '2026-10-14T00:05:00.000Z',
+};
+
+const verified = travelQuoteToAction({
+  agent: '0x1111111111111111111111111111111111111111',
+  nonce: '20',
+  quote,
+});
+const requote = travelQuoteToAction({
+  agent: verified.action.agent,
+  nonce: '21',
+  quote: { ...quote, total: '399000000', observedAt: '2026-10-14T00:01:00.000Z' },
+});
+
+console.log(travelQuoteChanged(verified.quote, requote.quote)); // true
+console.log(verified.action.scopeHash === requote.action.scopeHash); // false
+```
+
+This is the Atlas-style safety pattern APP adopts: **search → verify exact provider quote → bind quote into authorization scope → execute/prove**. A provider re-quote or expired offer cannot silently reuse the previous exact quote scope. `ATLAS` is a supported source label in the adapter, not a claim that APP's public deployment currently runs the Atlas CLI; the canonical public travel proof remains clearly labelled `DEMO`.
+
 ## Quick start — machine-readable commerce challenge
 
 ```ts
@@ -127,6 +163,56 @@ const actionHash = createSpendingActionHash({ ...payment, actionId });
 
 These helpers match `AgenticSpendingVault.sol`: recipient, token, resource, amount and nonce are bound into deterministic commitments before value can move.
 
+## Quick start — personal profile + encrypted payment receipt
+
+```ts
+import {
+  createEncryptionKeyCommitment,
+  createUserProfile,
+  createUserProfileHash,
+  encryptPrivateReceipt,
+  decryptPrivateReceipt,
+  evaluateProfilePolicy,
+  generateProfileEncryptionKey,
+} from '@agentic-proof/sdk';
+
+const key = generateProfileEncryptionKey(); // keep this user-side; never send it to MCP
+const profile = createUserProfile('0x1111111111111111111111111111111111111111', {
+  alias: 'traveler.one',
+  persona: 'BUSINESS_TRAVELER',
+  encryptionKeyCommitment: createEncryptionKeyCommitment(key),
+  createdAt: new Date().toISOString(),
+  policy: {
+    allowedActionTypes: ['PAY_SERVICE'],
+    allowedScopeHashes: [],
+    maxPerAction: '400000000',
+    dailyBudget: '600000000',
+    approvalAboveValue: '300000000',
+  },
+});
+
+const profileHash = createUserProfileHash(profile);
+const decision = evaluateProfilePolicy(profile, {
+  agent: '0x2222222222222222222222222222222222222222',
+  actionType: 'PAY_SERVICE',
+  scopeHash: `0x${'33'.repeat(32)}`,
+  value: '361000000',
+  currency: 'USDC6',
+  resource: 'travel:SFO-SIN',
+  nonce: '1',
+}, { spentToday: '100000000' });
+
+const aad = { profileHash, actionId: `0x${'44'.repeat(32)}` };
+const encrypted = await encryptPrivateReceipt(
+  { invoice: 'PRIVATE', amount: '361000000' },
+  key,
+  aad,
+);
+const plaintext = await decryptPrivateReceipt(encrypted, key, aad);
+```
+
+`PersonalProfileRegistry.sol` can store the profile/policy/key commitments and link `encrypted.commitment` to an existing `PAY_SERVICE` proof while keeping the key and plaintext receipt offchain.
+
 ## Quick start — independent Monad verifier
 
 ```ts
@@ -160,13 +246,17 @@ console.log(trust.verdict); // ACCEPT for the canonical historical payload
 - EIP-712 authorization typed-data construction;
 - Monad/EVM registry reader and proof bundles;
 - portable `ACCEPT / REJECT` proof-consumer policy;
+- exact travel-quote commitments with provider re-quote / expiry invalidation;
 - machine-readable `PAY_SERVICE` commerce challenge adapter;
 - specialist-agent capability manifests and deterministic metadata hashes;
 - Solidity-compatible smart-spending scope/action commitments for `AgenticSpendingVault`;
+- wallet-owned profile manifests + identity-level ALLOW/BLOCK/ESCALATE policy;
+- AES-256-GCM private payment receipt encryption/decryption + commitment helpers;
+- read helpers/ABI for `PersonalProfileRegistry`;
 - reusable travel/procurement reference scenarios.
 
 ## Security boundary
 
-This SDK does **not** expose a user private key, owner signer, `grantAuthorization`, `revokeAuthorization`, privileged `recordAction`, token transfer, or transaction broadcast primitive to an AI model. Those are explicit authority/execution boundaries controlled by the user or a separate trusted executor.
+This SDK does **not** expose a user wallet private key, profile encryption key, owner signer, `grantAuthorization`, `revokeAuthorization`, privileged `recordAction`, token transfer, or transaction broadcast primitive to an AI model. Those are explicit authority/execution/privacy boundaries controlled by the user or a separate trusted executor.
 
 The current hackathon package is a release candidate built from the public repository. npm publication is intentionally a separate release step so package ownership/versioning cannot block the submission.

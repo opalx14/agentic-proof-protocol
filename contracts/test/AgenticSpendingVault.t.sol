@@ -66,6 +66,25 @@ contract AgenticSpendingVaultTest {
         );
     }
 
+    function _grantProfilePayment(bytes32 profileHash, uint256 cap, uint256 nonce)
+        internal
+        returns (bytes32)
+    {
+        bytes32 baseScope = vault.spendingScopeHash(address(token), RECIPIENT, keccak256(bytes(RESOURCE)));
+        bytes32 profileScope = vault.profileBoundScopeHash(profileHash, baseScope);
+        return registry.grantAuthorization(
+            address(vault),
+            vault.PAY_SERVICE(),
+            profileScope,
+            cap,
+            uint64(block.timestamp),
+            uint64(block.timestamp + 1 hours),
+            nonce,
+            address(0),
+            false
+        );
+    }
+
     function _execute(
         bytes32 authorizationId,
         address recipient,
@@ -145,6 +164,48 @@ contract AgenticSpendingVaultTest {
         require(proof.agent == address(vault), "wrong proof agent");
         require(proof.value == 361_000_000, "wrong proof amount");
         require(proof.actionHash == actionHash, "wrong proof commitment");
+    }
+
+    function testProfileBoundPaymentTransfersAndRecordsBoundScope() public {
+        bytes32 profileHash = keccak256("personal-profile:v1");
+        bytes32 authId = _grantProfilePayment(profileHash, 400_000_000, 13);
+        (bytes32 actionId,) = vault.executeProfileAuthorizedPayment(
+            authId,
+            profileHash,
+            address(token),
+            payable(RECIPIENT),
+            361_000_000,
+            RESOURCE,
+            1,
+            TRACE_ROOT
+        );
+
+        AgenticProofRegistry.ActionProof memory proof = registry.getAction(actionId);
+        bytes32 baseScope = vault.spendingScopeHash(address(token), RECIPIENT, keccak256(bytes(RESOURCE)));
+        require(proof.scopeHash == vault.profileBoundScopeHash(profileHash, baseScope), "profile scope not recorded");
+        require(token.balanceOf(RECIPIENT) == 361_000_000, "profile payment missing");
+    }
+
+    function testWrongProfileHashCannotReuseProfileAuthorization() public {
+        bytes32 profileHash = keccak256("personal-profile:v1");
+        bytes32 authId = _grantProfilePayment(profileHash, 400_000_000, 14);
+        (bool ok,) = address(vault).call(
+            abi.encodeCall(
+                AgenticSpendingVault.executeProfileAuthorizedPayment,
+                (
+                    authId,
+                    keccak256("personal-profile:evil"),
+                    address(token),
+                    payable(RECIPIENT),
+                    361_000_000,
+                    RESOURCE,
+                    1,
+                    TRACE_ROOT
+                )
+            )
+        );
+        require(!ok, "wrong profile hash reused authorization");
+        require(token.balanceOf(RECIPIENT) == 0, "wrong profile moved funds");
     }
 
     function testWrongRecipientCannotReuseAuthorization() public {

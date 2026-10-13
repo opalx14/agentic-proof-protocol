@@ -3,12 +3,22 @@ import {
   actionForScenario,
   commerceChallengeToAction,
   createRegistryReader,
+  createProfileBoundScopeHash,
+  createEncryptionKeyCommitment,
+  createUserProfile,
+  createUserProfileHash,
+  decryptPrivateReceipt,
+  encryptPrivateReceipt,
+  evaluateProfilePolicy,
+  generateProfileEncryptionKey,
   createSpendingActionHash,
   createSpendingActionId,
   createSpendingScopeHash,
   evaluatePolicy,
   evaluateProofTrust,
   policyForScenario,
+  travelQuoteChanged,
+  travelQuoteToAction,
 } from '../shared/src/index.ts';
 
 const AGENT = '0x1111111111111111111111111111111111111111' as const;
@@ -70,6 +80,32 @@ check(
   'changing only payTo changes the authorized scope',
 );
 
+const atlasStyleQuote = {
+  version: '1' as const,
+  source: 'ATLAS' as const,
+  provider: 'atlas-flight',
+  offerId: 'offer-SGN-SIN-361',
+  origin: 'SGN',
+  destination: 'SIN',
+  cabin: 'economy',
+  total: '361000000',
+  currency: 'USDC6',
+  observedAt: '2026-10-14T00:00:00.000Z',
+  expiresAt: '2026-10-14T00:05:00.000Z',
+};
+const verified361 = travelQuoteToAction({ agent: AGENT, nonce: '30', quote: atlasStyleQuote });
+const requoted399 = travelQuoteToAction({
+  agent: AGENT,
+  nonce: '31',
+  quote: { ...atlasStyleQuote, total: '399000000', observedAt: '2026-10-14T00:01:00.000Z' },
+});
+check(
+  travelQuoteChanged(verified361.quote, requoted399.quote)
+    && verified361.action.scopeHash !== requoted399.action.scopeHash,
+  'travel quote re-verification',
+  '$361 → $399 provider re-quote changes quoteHash and exact authorization scope',
+);
+
 const scopeVector = createSpendingScopeHash({
   chainId: 10143,
   token: '0x2222222222222222222222222222222222222222',
@@ -98,6 +134,44 @@ check(
   /^0x[0-9a-f]{64}$/.test(spendingActionId) && /^0x[0-9a-f]{64}$/.test(spendingActionHash),
   'smart-spending commitments',
   `actionId=${spendingActionId.slice(0, 12)}… actionHash=${spendingActionHash.slice(0, 12)}…`,
+);
+
+const profileKey = generateProfileEncryptionKey();
+const profile = createUserProfile('0x6666666666666666666666666666666666666666', {
+  alias: 'traveler.one',
+  persona: 'BUSINESS_TRAVELER',
+  encryptionKeyCommitment: createEncryptionKeyCommitment(profileKey),
+  createdAt: '2026-10-13T12:00:00.000Z',
+  policy: {
+    allowedActionTypes: ['PAY_SERVICE'],
+    allowedScopeHashes: [merchantA.action.scopeHash],
+    maxPerAction: '400000000',
+    dailyBudget: '600000000',
+    approvalAboveValue: '300000000',
+  },
+});
+const profileHash = createUserProfileHash(profile);
+const profileDecision = evaluateProfilePolicy(profile, merchantA.action, { spentToday: '100000000' });
+check(
+  profileDecision.verdict === 'ESCALATE' && profileDecision.code === 'PROFILE_APPROVAL_REQUIRED',
+  'personal profile policy',
+  `$361 requires owner approval under profile=${profileHash.slice(0, 12)}…`,
+);
+const profileBoundScope = createProfileBoundScopeHash(profileHash, merchantA.action.scopeHash);
+check(
+  profileBoundScope !== merchantA.action.scopeHash,
+  'profile-bound payment scope',
+  `profile version is committed into scope=${profileBoundScope.slice(0, 12)}…`,
+);
+
+const privateReceipt = { invoice: 'PRIVATE-DEMO-361', merchant: 'DEMO AIRLINE', amount: '361000000' };
+const privateReceiptAad = { profileHash, actionId: spendingActionId };
+const encryptedReceipt = await encryptPrivateReceipt(privateReceipt, profileKey, privateReceiptAad);
+const decryptedReceipt = await decryptPrivateReceipt<typeof privateReceipt>(encryptedReceipt, profileKey, privateReceiptAad);
+check(
+  decryptedReceipt.invoice === privateReceipt.invoice && encryptedReceipt.ciphertext.indexOf(privateReceipt.invoice) === -1,
+  'encrypted private payment receipt',
+  `AES-256-GCM commitment=${encryptedReceipt.commitment.slice(0, 12)}…`,
 );
 
 const reader = createRegistryReader({ rpcUrl: RPC, contractAddress: REGISTRY });

@@ -39,6 +39,7 @@ interface IAgenticProofRegistry {
 contract AgenticSpendingVault {
     bytes32 public constant PAY_SERVICE = keccak256(bytes("PAY_SERVICE"));
     bytes32 public constant SCOPE_DOMAIN = keccak256(bytes("APP_SPENDING_SCOPE_V1"));
+    bytes32 public constant PROFILE_SCOPE_DOMAIN = keccak256(bytes("APP_PROFILE_SCOPE_V1"));
     bytes32 public constant ACTION_DOMAIN = keccak256(bytes("APP_SPENDING_ACTION_V1"));
 
     address public immutable owner;
@@ -65,6 +66,7 @@ contract AgenticSpendingVault {
     error NotExecutor();
     error ZeroAddress();
     error InvalidAgentId();
+    error InvalidProfileHash();
     error InvalidAuthorization();
     error AuthorizationOwnerMismatch();
     error AuthorizationAgentMismatch();
@@ -149,6 +151,10 @@ contract AgenticSpendingVault {
         return keccak256(abi.encode(SCOPE_DOMAIN, block.chainid, token, recipient, resourceHash_));
     }
 
+    function profileBoundScopeHash(bytes32 profileHash, bytes32 actionScopeHash) public pure returns (bytes32) {
+        return keccak256(abi.encode(PROFILE_SCOPE_DOMAIN, profileHash, actionScopeHash));
+    }
+
     function paymentActionId(
         bytes32 authorizationId,
         address token,
@@ -206,40 +212,71 @@ contract AgenticSpendingVault {
         uint256 paymentNonce,
         bytes32 traceRoot
     ) external onlyExecutor nonReentrant returns (bytes32 actionId, bytes32 actionHash) {
-        if (recipient == address(0)) revert ZeroAddress();
+        PaymentExecution memory payment = _buildPayment(token, recipient, amount, resource, paymentNonce);
+        return _executePreparedPayment(authorizationId, traceRoot, payment);
+    }
 
-        PaymentExecution memory payment;
+    function executeProfileAuthorizedPayment(
+        bytes32 authorizationId,
+        bytes32 profileHash,
+        address token,
+        address payable recipient,
+        uint256 amount,
+        string calldata resource,
+        uint256 paymentNonce,
+        bytes32 traceRoot
+    ) external onlyExecutor nonReentrant returns (bytes32 actionId, bytes32 actionHash) {
+        if (profileHash == bytes32(0)) revert InvalidProfileHash();
+        PaymentExecution memory payment = _buildPayment(token, recipient, amount, resource, paymentNonce);
+        payment.scopeHash = profileBoundScopeHash(profileHash, payment.scopeHash);
+        return _executePreparedPayment(authorizationId, traceRoot, payment);
+    }
+
+    function _buildPayment(
+        address token,
+        address payable recipient,
+        uint256 amount,
+        string calldata resource,
+        uint256 paymentNonce
+    ) private view returns (PaymentExecution memory payment) {
+        if (recipient == address(0)) revert ZeroAddress();
         payment.token = token;
         payment.recipient = recipient;
         payment.amount = amount;
         payment.resourceHash = resourceHash(resource);
         payment.paymentNonce = paymentNonce;
         payment.scopeHash = spendingScopeHash(token, recipient, payment.resourceHash);
+    }
 
-        _validateAuthorization(authorizationId, payment.scopeHash, amount);
+    function _executePreparedPayment(
+        bytes32 authorizationId,
+        bytes32 traceRoot,
+        PaymentExecution memory payment
+    ) private returns (bytes32 actionId, bytes32 actionHash) {
+        _validateAuthorization(authorizationId, payment.scopeHash, payment.amount);
 
         payment.actionId = paymentActionId(
             authorizationId,
-            token,
-            recipient,
-            amount,
+            payment.token,
+            payment.recipient,
+            payment.amount,
             payment.resourceHash,
-            paymentNonce
+            payment.paymentNonce
         );
         if (paymentExecuted[payment.actionId]) revert PaymentAlreadyExecuted();
 
         payment.actionHash = paymentActionHash(
             authorizationId,
             payment.actionId,
-            token,
-            recipient,
-            amount,
+            payment.token,
+            payment.recipient,
+            payment.amount,
             payment.resourceHash,
-            paymentNonce
+            payment.paymentNonce
         );
 
         paymentExecuted[payment.actionId] = true;
-        authorizationSpent[authorizationId] += amount;
+        authorizationSpent[authorizationId] += payment.amount;
         _recordAndTransfer(authorizationId, traceRoot, payment);
 
         return (payment.actionId, payment.actionHash);

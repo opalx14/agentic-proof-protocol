@@ -13,7 +13,7 @@ Agentic Proof Protocol (APP) is a user-owned authorization and evidence layer fo
 - **Interactive policy lab:** https://monad.promptmarketcap.net/lab
 - **AI/MCP connection guide:** https://monad.promptmarketcap.net/connect
 - **60-second judge walkthrough:** [JUDGES.md](JUDGES.md)
-- **One-command proof smoke:** `bun run demo:judge` — reads the canonical Monad proof directly, checks `$361`, tampered `$399`, `$401`, merchant binding and smart-spending commitment parity without a wallet.
+- **One-command proof smoke:** `bun run demo:judge` — reads the canonical Monad proof directly and checks `$361`, tampered `$399`, `$401`, merchant binding, smart-spending commitments, personal profile policy and AES-256-GCM private receipts without a wallet.
 
 Three numbers tell the protocol story:
 
@@ -72,11 +72,15 @@ Every highlight below has a test or live Monad Testnet evidence behind it.
 
 **6. The primitive is not travel-specific.** Travel (`BOOK_TRAVEL`) and Procurement (`PURCHASE_ITEM`) use the same hashing, policy and registry primitives without a protocol fork.
 
-**7. Agent commerce challenges are policy-bound before execution.** A machine-readable service/payment requirement can be converted into a `PAY_SERVICE` action that binds network, asset, payee and resource into the scope commitment. The amount is still checked against deterministic policy; changing the payee changes the scope and fails the original policy. APP does not sign or settle the payment.
+**7. Travel quotes can be exact-bound before authorization.** The SDK now models the same safety lifecycle used by the Atlas integration in Agentic AI Gateway: search provider inventory → re-verify the selected quote → hash the exact provider/offer/amount/currency/expiry into scope → authorize. A `$361 → $399` provider re-quote changes both `quoteHash` and scope, so the old exact consent cannot be silently reused; expired quotes fail closed. APP's canonical public proof still uses clearly labelled DEMO inventory, so this is an SDK-tested provider-integration pattern rather than a claim that Atlas is live in APP.
 
-**8. Specialist agents can publish verifiable capability manifests.** The SDK can hash an agent address, role and declared action types into metadata suitable for the registry's `metadataHash`. This makes multi-agent roles explicit without turning the manifest itself into an authorization boundary.
+**8. Agent commerce challenges are policy-bound before execution.** A machine-readable service/payment requirement can be converted into a `PAY_SERVICE` action that binds network, asset, payee and resource into the scope commitment. The amount is still checked against deterministic policy; changing the payee changes the scope and fails the original policy. APP does not sign or settle the payment.
 
-**9. A smart spending vault can enforce the authorization at the fund boundary.** `AgenticSpendingVault` is a local/tested Monad-ready contract that registers itself as the onchain agent, checks `PAY_SERVICE` authorization, recipient/resource scope, **cumulative authorization budget**, expiry and revocation, records the APP action proof, and transfers native/ERC-20 value atomically. Only the owner or an owner-selected executor can trigger payment, preventing third-party consumption of single-use permissions. Wrong recipient, over-cap amount, cumulative overspend, tampered resource, replay, single-use reuse, unknown executor and frozen-agent paths are covered by Foundry tests. This vault has not yet been claimed as a live deployed contract in the canonical demo.
+**9. Specialist agents can publish verifiable capability manifests.** The SDK can hash an agent address, role and declared action types into metadata suitable for the registry's `metadataHash`. This makes multi-agent roles explicit without turning the manifest itself into an authorization boundary.
+
+**10. A smart spending vault can enforce the authorization at the fund boundary.** `AgenticSpendingVault` is a local/tested Monad-ready contract that registers itself as the onchain agent, checks `PAY_SERVICE` authorization, recipient/resource scope, **cumulative authorization budget**, expiry and revocation, records the APP action proof, and transfers native/ERC-20 value atomically. Only the owner or an owner-selected executor can trigger payment, preventing third-party consumption of single-use permissions. Wrong recipient, over-cap amount, cumulative overspend, tampered resource, replay, single-use reuse, unknown executor and frozen-agent paths are covered by Foundry tests. This vault has not yet been claimed as a live deployed contract in the canonical demo.
+
+**11. A person can carry a blockchain profile without publishing private receipts.** `PersonalProfileRegistry` is a separate local-tested Monad-ready identity module: the wallet owns a versioned `profileHash`, `policyHash` and encryption-key commitment, while sensitive payment details stay AES-256-GCM encrypted offchain. A profile-level policy adds allowed action/scope rules, per-action limit, daily budget and optional owner-approval threshold before the existing APP execution policy. Only an encrypted receipt commitment can be linked to an already-recorded `PAY_SERVICE` action owned by that wallet; PII and the encryption key never go onchain or into MCP.
 
 The commerce and specialist-agent additions were independently implemented after reviewing public hackathon winner architectures: Latinum's agent-commerce payment challenge flow and Project Plutus's specialist-agent pattern. The spending-vault design also adapts the capability-vault idea previously studied in NexusWallet while using APP's EVM/Monad authorization and proof model. No Latinum source was copied; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
@@ -138,8 +142,8 @@ Canonical vector logo / favicon: `web/app/icon.svg`.
 
 ## Monorepo
 
-- `contracts/` — Solidity registry, policy-bound smart spending vault + Foundry tests.
-- `shared/` — TypeScript SDK, canonical hashing, policy engine, EIP-712 data, viem reader.
+- `contracts/` — Solidity authority registry, smart spending vault, personal profile/private-receipt registry + Foundry tests.
+- `shared/` — TypeScript SDK, canonical hashing, policy engine, profile policy, AES-GCM private receipts, EIP-712 data and viem readers.
 - `agent/` — Fastify policy/control-plane API, idempotency, hash-chain audit, optional agent signer.
 - `mcp/` — restricted MCP surface for proposal/evaluation/preparation/verification.
 - `web/` — Next.js App Router product UI and independent direct-RPC verifier.
@@ -148,7 +152,7 @@ Canonical vector logo / favicon: `web/app/icon.svg`.
 
 ## TypeScript SDK
 
-The repository now includes a judge-ready package artifact at [`sdk/`](sdk/) named `@agentic-proof/sdk`. It exposes canonical hashing, deterministic policy evaluation, EIP-712 authorization data, Monad proof reads, portable trust decisions, `PAY_SERVICE` commerce challenges, specialist-agent capability manifests, and Solidity-compatible smart-spending scope/action commitments without exposing signing or owner authority.
+The repository now includes a judge-ready package artifact at [`sdk/`](sdk/) named `@agentic-proof/sdk`. It exposes canonical hashing, deterministic policy evaluation, exact verified travel-quote binding/re-quote invalidation, EIP-712 authorization data, Monad proof reads, portable trust decisions, `PAY_SERVICE` commerce challenges, specialist-agent capability manifests, Solidity-compatible smart-spending commitments, wallet-owned personal profile policy and AES-256-GCM private receipt helpers without exposing signing or owner authority.
 
 ```bash
 bun run sdk:build
@@ -163,7 +167,7 @@ bun run sdk:pack
 APP exposes four non-signing MCP tools for status, deterministic policy evaluation, action preparation and independent onchain verification. The model can propose an action but cannot grant itself authority, revoke permissions, sign or broadcast a transaction.
 
 - **Connect Claude Code / Codex / Antigravity:** https://monad.promptmarketcap.net/connect
-- **Seven explained case studies:** https://monad.promptmarketcap.net/use-cases
+- **Eight explained case studies:** https://monad.promptmarketcap.net/use-cases
 - **Local stdio:** `bun run dev:mcp` (requires local Agent API); safe `.mcp.json` and `.cursor/mcp.json` are included for MCP-aware IDEs
 - **Remote Streamable HTTP:** `POST /agent-api/mcp` with an owner-provisioned Bearer token; disabled by default until `APP_MCP_BEARER_TOKEN` is configured server-side
 - **Setup and security:** [docs/MCP.md](docs/MCP.md)

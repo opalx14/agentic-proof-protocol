@@ -1,7 +1,7 @@
 {
   "name": "@agentic-proof/sdk",
   "version": "0.1.0",
-  "description": "TypeScript SDK for scoped AI-agent authorization, deterministic policy, commerce challenges and independent Monad proof verification.",
+  "description": "TypeScript SDK for AI-agent authorization, personal profile policy, private payment receipts and independent Monad proof verification.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./index.d.ts",

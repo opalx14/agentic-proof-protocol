@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowUpRight, Bot, CheckCircle2, Fingerprint, LockKeyhole, Plane, ShieldCheck, ShoppingCart, ShieldAlert, WalletCards, Workflow } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Bot, CheckCircle2, Fingerprint, LockKeyhole, Plane, ShieldCheck, ShoppingCart, ShieldAlert, UserRound, WalletCards, Workflow } from 'lucide-react';
 
 const LIVE_ACTION = '0x7606c8e32a09ffbcd524b37b6e82a27ecccd5c61ad8e7b4ed2d0162716f404cf';
 const PROOF_URL = `/verify/${LIVE_ACTION}`;
@@ -10,12 +10,18 @@ const cases = [
     tone: 'live',
     icon: Plane,
     name: 'Travel booking agent',
-    subtitle: 'Give an AI a budget, not a blank cheque.',
-    problem: 'An agent chooses a flight offer, but the user must control the maximum value, permitted route and expiry.',
-    authority: 'BOOK_TRAVEL · SGN → SIN · $400 maximum · 30-minute grant',
-    proposal: 'The reference agent proposes a $361 demo itinerary. A $401 alternative is rejected by policy.',
-    proof: 'Grant, record and revoke transactions exist on Monad Testnet. The recorded payload matches its commitment.',
-    boundary: 'The chain proves authorization and an action commitment, not that a flight was actually booked.',
+    subtitle: 'Search a quote, verify it, authorize it, then prove exactly what the agent used.',
+    problem: 'Travel prices are mutable. An agent can discover a valid offer, but a provider may return a different amount or expiry moments later. Old consent must not silently authorize the new quote.',
+    authority: 'Canonical live proof: BOOK_TRAVEL · SGN → SIN · $400 maximum. SDK hardening path can additionally bind the exact verified provider quote into scope.',
+    proposal: 'The public demo records a $361 DEMO itinerary and blocks $401. The quote adapter models an Atlas-style search → re-verify boundary: if $361 becomes $399 before approval, quoteHash and scope both change.',
+    proof: 'Grant, record and revoke transactions exist on Monad Testnet for the canonical $361 demo. Separate SDK tests prove an exact verified quote cannot reuse old scope after provider re-quote or expiry.',
+    boundary: 'The canonical public proof uses DEMO inventory and proves authorization/commitment—not a real flight booking. Atlas/provider quote binding is an SDK-tested integration pattern, not a claimed live APP provider.',
+    flow: [
+      ['1 · SEARCH', 'Provider inventory', 'Agent may rank offers, but inventory itself grants no authority.'],
+      ['2 · VERIFY', 'Exact quote commitment', 'Provider, offer, amount, currency and expiry become a quoteHash + exact scope.'],
+      ['3 · AUTHORIZE', '$361 / $399 / $401', '$361 may fit policy; a re-quote changes scope; $401 is blocked by the hard cap.'],
+      ['4 · PROVE', 'Monad commitment', 'Any verifier can later check the action commitment and revocation semantics.'],
+    ],
     cta: 'Open live travel proof',
     href: PROOF_URL,
   },
@@ -109,6 +115,21 @@ const cases = [
     cta: 'Review vault source',
     href: 'https://github.com/opalx14/agentic-proof-protocol/blob/main/contracts/src/AgenticSpendingVault.sol',
   },
+  {
+    index: '08',
+    tag: 'IDENTITY & PRIVACY · LOCAL-TESTED',
+    tone: 'reference',
+    icon: UserRound,
+    name: 'Personal blockchain profile',
+    subtitle: 'Bind identity, payment policy and encrypted receipts without putting PII onchain.',
+    problem: 'A person needs one portable identity for AI payments, but a public chain should not expose invoices, travel details or personal data.',
+    authority: 'The wallet owns a versioned profile commitment, allowed action/scope rules, per-action cap, daily budget and an explicit approval threshold.',
+    proposal: 'Profile policy returns ALLOW / BLOCK / ESCALATE before the existing APP execution policy. AI cannot widen the profile or access the encryption key.',
+    proof: 'AES-256-GCM encrypts private payment receipts offchain. PersonalProfileRegistry links only the encrypted receipt commitment to an existing PAY_SERVICE proof owned by that wallet.',
+    boundary: 'The profile contract and encrypted-receipt flow are local-tested / Monad-ready until separately deployed. Canonical live Monad evidence remains AgenticProofRegistry.',
+    cta: 'Open personal profile lab',
+    href: '/profile',
+  },
 ] as const;
 
 export default function UseCasesPage() {
@@ -159,7 +180,12 @@ export default function UseCasesPage() {
         </section>
 
         {cases.map((item) => (
-          <section className="case-detail" id={`case-${item.index}`} key={item.index}>
+          <section
+            className="case-detail"
+            id={`case-${item.index}`}
+            key={item.index}
+            data-tour={item.index === '01' ? 'case-travel' : item.index === '08' ? 'case-profile' : undefined}
+          >
             <div className="case-detail-header">
               <div className="case-number">{item.index}</div>
               <div>
@@ -175,9 +201,26 @@ export default function UseCasesPage() {
               <article><span>AI PROPOSAL & POLICY</span><p>{item.proposal}</p></article>
               <article><span>PROOF / EVIDENCE</span><p>{item.proof}</p></article>
             </div>
+            {'flow' in item ? (
+              <div data-tour="case-travel-lifecycle" className="mt-4 rounded-2xl border border-violet-400/15 bg-violet-400/[0.035] p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] font-extrabold tracking-[.14em] text-violet-300">ATLAS-STYLE QUOTE LIFECYCLE · SDK-TESTED</span>
+                  <span className="text-[10px] text-slate-500">Canonical live proof remains DEMO inventory</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                  {item.flow.map(([step, title, copy]) => (
+                    <div key={step} className="rounded-xl border border-white/10 bg-black/15 p-3">
+                      <span className="text-[9px] font-extrabold tracking-[.12em] text-emerald-300">{step}</span>
+                      <strong className="mt-2 block text-xs text-white">{title}</strong>
+                      <p className="mt-1 text-[11px] leading-5 text-slate-400">{copy}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="case-detail-footer">
               <div><ShieldAlert size={17} /><span><strong>Proof boundary:</strong> {item.boundary}</span></div>
-              <a className="secondary nav-button" href={item.href}>{item.cta} <ArrowUpRight size={14} /></a>
+              <a data-tour={item.index === '01' ? 'case-travel-proof' : undefined} className="secondary nav-button" href={item.href}>{item.cta} <ArrowUpRight size={14} /></a>
             </div>
           </section>
         ))}

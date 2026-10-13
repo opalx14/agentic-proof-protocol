@@ -161,6 +161,50 @@ export type CommerceActionBundle = {
   };
 };
 
+export type TravelQuoteSource = 'DEMO' | 'ATLAS' | 'PROVIDER';
+export type TravelQuote = {
+  version: '1';
+  source: TravelQuoteSource;
+  provider: string;
+  offerId: string;
+  origin: string;
+  destination: string;
+  cabin: string;
+  total: string;
+  currency: string;
+  observedAt: string;
+  expiresAt: string;
+};
+export type TravelQuoteActionBundle = {
+  quote: TravelQuote;
+  quoteHash: Hex32;
+  scope: {
+    kind: 'APP_TRAVEL_VERIFIED_QUOTE';
+    provider: string;
+    offerId: string;
+    origin: string;
+    destination: string;
+    cabin: string;
+    currency: string;
+    quoteHash: Hex32;
+  };
+  action: ProposedAction;
+  payload: {
+    kind: 'APP_TRAVEL_QUOTE';
+    version: '1';
+    source: TravelQuoteSource;
+    provider: string;
+    offerId: string;
+    origin: string;
+    destination: string;
+    cabin: string;
+    total: string;
+    currency: string;
+    observedAt: string;
+    expiresAt: string;
+  };
+};
+
 export type AgentCapability = { actionType: string; description: string };
 export type AgentManifest = {
   version: '1';
@@ -169,6 +213,62 @@ export type AgentManifest = {
   role: string;
   capabilities: AgentCapability[];
   endpoint?: string;
+};
+
+export type ProfilePersona = 'PERSONAL' | 'BUSINESS_TRAVELER' | 'PROCUREMENT_OFFICER' | 'DEFI_OPERATOR';
+export type ProfilePolicy = {
+  allowedActionTypes: string[];
+  allowedScopeHashes: Hex32[];
+  maxPerAction: string;
+  dailyBudget: string;
+  approvalAboveValue: string | null;
+};
+export type UserProfile = {
+  version: '1';
+  user: Address;
+  alias: string;
+  persona: ProfilePersona;
+  policy: ProfilePolicy;
+  encryptionKeyCommitment: Hex32;
+  createdAt: string;
+};
+export type ProfilePolicyDecision = {
+  verdict: 'ALLOW' | 'BLOCK' | 'ESCALATE';
+  code?: 'PROFILE_ACTION_NOT_ALLOWED' | 'PROFILE_SCOPE_NOT_ALLOWED' | 'PROFILE_VALUE_EXCEEDS_LIMIT' | 'PROFILE_DAILY_BUDGET_EXCEEDED' | 'PROFILE_APPROVAL_REQUIRED';
+  reasons: string[];
+  profileHash: Hex32;
+  action: ProposedAction;
+};
+export type EncryptedReceiptBundle = {
+  version: '1';
+  algorithm: 'A256GCM';
+  iv: string;
+  ciphertext: string;
+  plaintextHash: Hex32;
+  associatedDataHash: Hex32;
+  commitment: Hex32;
+};
+export type OnchainPersonalProfileRecord = {
+  owner: Address;
+  profileHash: Hex32;
+  policyHash: Hex32;
+  encryptionKeyCommitment: Hex32;
+  version: bigint;
+  updatedAt: bigint;
+  active: boolean;
+  paymentCount: bigint;
+  totalRecordedValue: bigint;
+};
+export type PrivatePaymentReceiptRecord = {
+  receiptId: Hex32;
+  user: Address;
+  actionId: Hex32;
+  authorizationId: Hex32;
+  encryptedPayloadHash: Hex32;
+  profileHash: Hex32;
+  policyHash: Hex32;
+  value: bigint;
+  linkedAt: bigint;
 };
 
 export type ReferenceScenario = {
@@ -197,6 +297,8 @@ export const TRAVEL_REFERENCE_SCENARIO: ReferenceScenario;
 export const PROCUREMENT_REFERENCE_SCENARIO: ReferenceScenario;
 export const SPENDING_SCOPE_DOMAIN: Hex32;
 export const SPENDING_ACTION_DOMAIN: Hex32;
+export const PERSONAL_PROFILE_REGISTRY_ABI: readonly unknown[];
+export const PROFILE_SCOPE_DOMAIN: Hex32;
 
 export function canonicalize(value: unknown): string;
 export function hashPayload(value: unknown): Hex32;
@@ -221,6 +323,22 @@ export function createSpendingActionId(input: {
   resource: string;
   paymentNonce: bigint;
 }): Hex32;
+export function createUserProfile(user: Address, input: Omit<UserProfile, 'version' | 'user'>): UserProfile;
+export function createUserProfileHash(profile: UserProfile): Hex32;
+export function createProfilePolicyHash(policy: ProfilePolicy): Hex32;
+export function createProfileBoundScopeHash(profileHash: Hex32, actionScopeHash: Hex32): Hex32;
+export function evaluateProfilePolicy(profile: UserProfile, action: ProposedAction, context?: { spentToday?: bigint | string }): ProfilePolicyDecision;
+export function generateProfileEncryptionKey(): Hex32;
+export function createEncryptionKeyCommitment(key: Hex32): Hex32;
+export function createEncryptedReceiptCommitment(bundle: Omit<EncryptedReceiptBundle, 'commitment'>): Hex32;
+export function encryptPrivateReceipt(payload: unknown, key: Hex32, associatedData?: unknown): Promise<EncryptedReceiptBundle>;
+export function decryptPrivateReceipt<T = unknown>(bundle: EncryptedReceiptBundle, key: Hex32, associatedData?: unknown): Promise<T>;
+export function createPersonalProfileReader(config: { rpcUrl: string; contractAddress: Address }): {
+  client: unknown;
+  readProfile(user: Address): Promise<OnchainPersonalProfileRecord | null>;
+  readPaymentReceipt(receiptId: Hex32): Promise<PrivatePaymentReceiptRecord | null>;
+};
+
 export function createSpendingActionHash(input: {
   chainId: bigint | number;
   vault: Address;
@@ -242,6 +360,10 @@ export function buildAuthorizationTypedData(input: AuthorizationTypedDataInput):
 export function createRegistryReader(config: RegistryReaderConfig): RegistryReader;
 
 export function commerceChallengeToAction(input: CommerceActionInput): CommerceActionBundle;
+export function createTravelQuoteHash(quote: TravelQuote): Hex32;
+export function createTravelQuoteScopeHash(quote: TravelQuote): Hex32;
+export function travelQuoteChanged(previous: TravelQuote, current: TravelQuote): boolean;
+export function travelQuoteToAction(input: { agent: Address; nonce: string; quote: TravelQuote }): TravelQuoteActionBundle;
 export function createAgentManifest(agent: Address, input: Omit<AgentManifest, 'version' | 'agent'>): AgentManifest;
 export function createAgentManifestHash(manifest: AgentManifest): Hex32;
 export function manifestAllowsAction(manifest: AgentManifest, action: Pick<ProposedAction, 'agent' | 'actionType'>): boolean;

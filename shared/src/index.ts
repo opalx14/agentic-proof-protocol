@@ -8,4 +8,8 @@ export * from './examples';
 export * from './commerce';
 export * from './agent-manifest';
 export * from './spending';
+export * from './user-profile';
+export * from './private-receipt';
+export * from './profile-contract';
 export * from './trust';
+export * from './travel-quote';

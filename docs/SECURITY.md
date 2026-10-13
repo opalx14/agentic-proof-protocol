@@ -73,6 +73,10 @@ Capability manifests are declarations, not authority. Their deterministic hash c
 
 `AgenticSpendingVault` is a stricter fund-boundary executor for `PAY_SERVICE`. The vault itself is the registered APP agent; it accepts execution only from the owner or an owner-selected executor, then checks the owner authorization, action type, recipient/token/resource scope, revocation/expiry, per-call amount and cumulative amount already spent under that authorization. The vault marks replay state and cumulative spend before recording the APP action and transferring funds; EVM atomicity rolls all of those effects back if proof recording or token/native transfer fails. Emergency withdrawals remain owner-only. The vault is currently local/tested and is not presented as part of the canonical live Monad deployment until separately deployed.
 
+### Personal profile + encrypted receipt boundary
+
+`PersonalProfileRegistry` is an optional identity/privacy layer. The wallet is the profile owner; onchain state contains only `profileHash`, `policyHash`, an encryption-key commitment, aggregate payment counters and encrypted-receipt commitments. Plaintext PII, invoice content and the AES-256-GCM key remain offchain. Profile-enabled payments use `profileBoundScopeHash(profileHash, basePaymentScope)`: `AgenticSpendingVault.executeProfileAuthorizedPayment` records that bound scope, and the profile registry accepts a private receipt only when the APP action carries the exact same current profile-bound scope. This prevents another wallet from attaching the payment and prevents an action created under profile v1 from being relabelled under profile v2. Profile policy runs before the existing APP execution policy and cannot widen a stricter APP/onchain authorization. MCP exposes no encryption-key, decryption, profile-mutation or receipt-linking tool. These profile modules are currently local/tested and must not be described as live on Monad until separately deployed.
+
 ## Replay and ambiguity
 
 - Authorization nonces are unique per user.

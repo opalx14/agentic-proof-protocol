@@ -113,7 +113,7 @@ export default function ConnectPage() {
         </section>
 
         <section className="connect-layout">
-          <div className="connect-client-list" role="tablist" aria-label="MCP client">
+          <div className="connect-client-list" data-tour="connect-clients" role="tablist" aria-label="MCP client">
             {CLIENTS.map((item) => (
               <button key={item.id} type="button" role="tab" aria-selected={client === item.id}
                 className={client === item.id ? 'client-tab active' : 'client-tab'}
@@ -123,7 +123,7 @@ export default function ConnectPage() {
               </button>
             ))}
           </div>
-          <div className="panel connect-snippet">
+          <div className="panel connect-snippet" data-tour="connect-config">
             <div className="connect-snippet-top">
               <div><span className="kicker">CONFIGURATION</span><h3>{CLIENTS.find((item) => item.id === client)?.name}</h3></div>
               <button className="compact" type="button" onClick={() => void copySnippet()}>
@@ -143,7 +143,7 @@ export default function ConnectPage() {
           <article><span>03</span><strong>Test the authority boundary</strong><p>Run one $361 proposal that should ALLOW, then a $401 proposal that must BLOCK. Ask the model whether it can grant, revoke, sign or broadcast through APP.</p></article>
         </section>
 
-        <section className="panel connect-snippet connect-demo-prompt">
+        <section className="panel connect-snippet connect-demo-prompt" data-tour="connect-judge-prompt">
           <div className="connect-snippet-top">
             <div><span className="kicker">JUDGE PROMPT · AI-NATIVE FLOW</span><h3>Make the agent prove its limits</h3></div>
             <span className="scenario-tag">$361 ALLOW · $401 BLOCK · PAY_SERVICE</span>
@@ -158,7 +158,7 @@ Finally, tell me whether APP gives you any tool to grant yourself authority, rev
         <section className="section-heading">
           <div><span className="kicker">MCP CAPABILITIES</span><h2>Four tools. No self-authorization.</h2></div>
         </section>
-        <section className="tool-grid">
+        <section className="tool-grid" data-tour="connect-tools">
           {[
             ['agenticproof_get_status', 'Read public runtime configuration and policy.'],
             ['agenticproof_evaluate_action', 'Evaluate a proposed action: ALLOW, BLOCK or ESCALATE.'],

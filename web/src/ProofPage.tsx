@@ -106,12 +106,12 @@ export default function ProofPage({ actionId }: { actionId: string }) {
               <strong>Reproduce the recorded Monad Testnet proof</strong>
               <p>This $361 demo payload was committed onchain before the user revoked its authorization. Compare the exact payload with a modified $399 version. Neither button signs or sends a transaction.</p>
               <div className="reference-proof-buttons">
-                <button className="secondary" disabled={busy} onClick={() => {
+                <button data-tour="proof-original" className="secondary" disabled={busy} onClick={() => {
                   const sample = json(referencePayload);
                   setPayload(sample);
                   void verify(sample);
                 }}>Verify original $361</button>
-                <button className="secondary" disabled={busy} onClick={() => {
+                <button data-tour="proof-tamper" className="secondary" disabled={busy} onClick={() => {
                   const tampered = json({ ...referencePayload, totalUsd: 399 });
                   setPayload(tampered);
                   void verify(tampered);
@@ -121,7 +121,7 @@ export default function ProofPage({ actionId }: { actionId: string }) {
           )}
           <textarea value={payload} onChange={(event) => setPayload(event.target.value)} rows={12} placeholder={'{\n  "route": "SGN → SIN",\n  "totalUsd": 361\n}'} />
           <button className="primary wide" onClick={() => void verify()} disabled={busy || !chain}>Verify payload</button>
-          {proof && <div className="trust-verdicts">
+          {proof && <div className="trust-verdicts" data-tour="proof-trust">
             <div className={`trust-verdict ${historicalDecision?.verdict === 'ACCEPT' ? 'accept' : 'reject'}`}><span>Historical proof consumer</span><strong>{historicalDecision?.verdict}</strong><small>{historicalDecision?.reasons.join(' · ') || 'Valid proof at action time'}</small></div>
             <div className={`trust-verdict ${currentDecision?.verdict === 'ACCEPT' ? 'accept' : 'reject'}`}><span>New-action consumer</span><strong>{currentDecision?.verdict}</strong><small>{currentDecision?.reasons.join(' · ') || 'Current authority can still be trusted'}</small></div>
           </div>}
@@ -133,7 +133,7 @@ export default function ProofPage({ actionId }: { actionId: string }) {
         <pre>{proof ? json(proof) : message}</pre>
         <div className="proof-page-actions">
           <span>{message}</span>
-          {explorerContract && <a className="explorer-link" href={explorerContract} target="_blank" rel="noreferrer">Registry on MonadVision <ExternalLink size={13} /></a>}
+          {explorerContract && <a data-tour="proof-explorer" className="explorer-link" href={explorerContract} target="_blank" rel="noreferrer">Registry on MonadVision <ExternalLink size={13} /></a>}
         </div>
       </section>
     </main>

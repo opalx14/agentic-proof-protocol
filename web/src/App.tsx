@@ -665,11 +665,11 @@ export default function App() {
             and let any application independently verify what happened without trusting the agent operator.
           </p>
           <div className="hero-cta-row">
-            <a className="primary nav-button" href={`/verify/${LIVE_PROOF.actionId}`}>Try live proof <ExternalLink size={15} /></a>
-            <a className="secondary nav-button" href="/use-cases">Explore 7 case studies <ExternalLink size={15} /></a>
-            <a className="secondary nav-button" href="/connect">Connect your AI <ExternalLink size={15} /></a>
+            <a data-tour="home-live-proof" className="primary nav-button" href={`/verify/${LIVE_PROOF.actionId}`}>Try live proof <ExternalLink size={15} /></a>
+            <a className="secondary nav-button" href="/use-cases">Explore 8 case studies <ExternalLink size={15} /></a>
+            <a data-tour="home-connect-ai" className="secondary nav-button" href="/connect">Connect your AI <ExternalLink size={15} /></a>
           </div>
-          <div className="hero-flow">
+          <div className="hero-flow" data-tour="home-flow">
             <div><Bot size={18} /><span>AI proposal</span></div>
             <i>→</i>
             <div><ShieldCheck size={18} /><span>Policy gate</span></div>
@@ -770,7 +770,7 @@ export default function App() {
                   aria-label="Agent proposal prompt"
                 />
                 <div className="proposal-controls">
-                  <button className="compact" onClick={() => void onPropose()} disabled={!referenceAgentAddress || busy === 'proposal'}>
+                  <button data-tour="home-ai-proposal" className="compact" onClick={() => void onPropose()} disabled={!referenceAgentAddress || busy === 'proposal'}>
                     <Bot size={14} /> Ask agent
                   </button>
                   {agentProposal && (
@@ -786,7 +786,7 @@ export default function App() {
                 )}
                 {prepared && <code>{prepared.actionHash}</code>}
               </div>
-              <button className="compact" onClick={() => void onPrepare()} disabled={!authorizationUsable || busy === 'prepare'}>Policy check</button>
+              <button data-tour="home-policy-check" className="compact" onClick={() => void onPrepare()} disabled={!authorizationUsable || busy === 'prepare'}>Policy check</button>
             </div>
 
             <div className="step-row">
@@ -807,7 +807,7 @@ export default function App() {
                 <span>Hard cap must fail closed before chain execution.</span>
                 {negativeDecision && <div className="decision block">{negativeDecision}</div>}
               </div>
-              <button className="compact danger" onClick={() => void onNegativeTest()} disabled={!action || busy === 'negative'}><Ban size={14} /> Test block</button>
+              <button data-tour="home-block-test" className="compact danger" onClick={() => void onNegativeTest()} disabled={!action || busy === 'negative'}><Ban size={14} /> Test block</button>
             </div>
           </article>
 

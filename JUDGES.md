@@ -11,7 +11,7 @@ Agentic Proof Protocol (APP) is a user-owned authorization and evidence layer fo
 3. Click **Test tampered $399** → the same onchain action still exists, but the supplied payload no longer matches and the consumer returns `REJECT · PAYLOAD_MISMATCH`.
 4. Open the [interactive lab](https://monad.promptmarketcap.net/lab) and run the `$401` negative path → deterministic policy returns `BLOCK · VALUE_EXCEEDS_HARD_LIMIT` against the `$400` cap.
 5. Re-open the recorded proof after revocation → the action remains valid at action time, while current authorization is revoked and new-action trust returns `REJECT`.
-6. For a terminal-only smoke, run `bun run demo:judge` → it checks the live Monad proof, `$361/$399/$401`, merchant-scope binding and the SDK/Solidity smart-spending commitment vector without a wallet.
+6. For a terminal-only smoke, run `bun run demo:judge` → it checks the live Monad proof, `$361/$399/$401`, merchant-scope binding, smart-spending commitments, personal profile policy and an AES-256-GCM private payment receipt without a wallet.
 
 ## The AI-native flow
 
@@ -72,14 +72,16 @@ This is intentional security behavior: APP does not expose a public signing agen
 
 ## Technical evidence
 
-- Core TypeScript/Bun suite: **56/56 PASS** in the current release candidate, including an in-memory MCP protocol client that lists the exact safe tool surface, proves `$361 → ALLOW` / `$401 → BLOCK`, adapts a commerce challenge through the non-signing prepare path, and verifies Solidity-compatible spending-scope commitments.
-- Packaged SDK smoke suite: **3/3 PASS**; `npm pack --dry-run` produces the `@agentic-proof/sdk@0.1.0` artifact with runtime bundle, type declarations and quick-start README without publishing it.
-- Foundry contract suite: **24/24 PASS**: 11 registry tests plus 13 `AgenticSpendingVault` tests covering authorized ERC-20 payment + atomic proof recording, wrong recipient, per-call over-cap amount, cumulative authorization-budget overspend, revoked authorization, replay, single-use reuse, unauthorized executor/front-run protection, configured executor execution, tampered resource, wrong action type, frozen agent, and SDK/Solidity scope-vector parity.
+- Core TypeScript/Bun suite: **62/62 PASS** in the current release candidate: shared SDK/policy/profile/crypto/travel-quote tests plus agent, web and MCP suites. This includes `$361 → ALLOW` / `$401 → BLOCK`, exact travel quote re-verification, commerce scope binding, profile-level ALLOW/BLOCK/ESCALATE, AES-256-GCM round-trip + tamper/wrong-key rejection and Solidity-compatible smart-spending commitments.
+- Packaged SDK smoke suite: **5/5 PASS**; `npm pack --dry-run` produces the `@agentic-proof/sdk@0.1.0` artifact with runtime bundle, type declarations and quick-start README without publishing it.
+- Foundry contract suite: **35/35 PASS**: 11 registry tests + 15 `AgenticSpendingVault` tests + 9 `PersonalProfileRegistry` tests. The vault now includes a profile-bound payment path that commits the exact `profileHash` into payment scope and rejects a mismatched profile version. The profile registry tests cover wallet-owned profile versions, PAY_SERVICE receipt linking, wrong-wallet rejection, non-payment rejection, duplicate-receipt rejection, inactive-profile rejection, chain/wallet-bound profile IDs, SDK/Solidity profile-scope parity and rejection when an old action is relabelled under a newer profile version.
 - `bun run typecheck`, `bun run lint`, and `bun run build`: PASS in the current release candidate.
 - Public backend write route is blocked; hosted agent reports `signerReady=false`.
 - The verifier reads Monad RPC directly rather than trusting the agent backend to declare itself valid.
+- Travel now has an explicit provider lifecycle: search → verify exact quote → bind quoteHash into authorization scope → authorize/prove. A `$361 → $399` re-quote changes scope, and expiry fails closed. This is SDK-tested Atlas-style hardening; the canonical public APP travel proof remains DEMO inventory.
 - Specialist-agent manifests now bind agent address + declared role/capabilities into a deterministic metadata hash; manifests remain declarations, while policy + Monad authorization remain enforcement.
 - `AgenticSpendingVault` is implemented and locally verified as the fund-boundary enforcement layer. It is deliberately listed as local/tested until separately deployed; the canonical live evidence above remains the already-deployed registry flow. Case 07 on `/use-cases` exposes this distinction explicitly to judges.
+- `PersonalProfileRegistry` + profile policy + AES-256-GCM private receipts add the missing identity/privacy layer: a wallet owns versioned profile/policy/key commitments, while plaintext payment details stay offchain. Case 08 and `/profile` label this module local-tested / Monad-ready until separately deployed.
 
 See [README.md](README.md) for architecture and setup, [docs/SECURITY.md](docs/SECURITY.md) for threat boundaries, and [docs/MCP.md](docs/MCP.md) for AI-client integration.
 
