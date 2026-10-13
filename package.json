@@ -1,0 +1,45 @@
+{
+  "name": "agentic-proof-protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.2.18",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "shared",
+    "agent",
+    "mcp",
+    "web"
+  ],
+  "scripts": {
+    "dev": "bun --env-file=.env.local run dev:stack",
+    "dev:stack": "concurrently --kill-others-on-fail --names agent,web --prefix-colors auto \"bun run dev:agent\" \"bun run dev:web\"",
+    "dev:agent": "bun run --filter @agentic-proof/agent dev",
+    "dev:web": "bun run --filter @agentic-proof/web dev",
+    "dev:mcp": "bun run --filter @agentic-proof/mcp dev",
+    "start": "concurrently --kill-others-on-fail --names agent,web --prefix-colors auto \"bun agent/src/index.ts\" \"bun run --filter @agentic-proof/web start\"",
+    "build": "bun run typecheck && bun run --filter @agentic-proof/web build && bun run --filter @agentic-proof/mcp build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "bun run --filter @agentic-proof/shared test && bun run --filter @agentic-proof/agent test && bun run --filter @agentic-proof/web test && bun run --filter @agentic-proof/mcp test",
+    "contracts:build": "forge build --root contracts",
+    "contracts:test": "forge test --root contracts -vv",
+    "monad:chain-id": "cast chain-id --rpc-url https://testnet-rpc.monad.xyz",
+    "monad:wallet:new": "cast wallet new monad-deployer",
+    "monad:wallet:list": "cast wallet list",
+    "monad:deployer": "cast wallet address --account monad-deployer",
+    "monad:balance": "cast balance --ether $(cast wallet address --account monad-deployer) --rpc-url https://testnet-rpc.monad.xyz",
+    "monad:faucet": "printf 'https://faucet.monad.xyz\\n'",
+    "monad:deploy": "forge script script/Deploy.s.sol:DeployAgenticProofRegistry --root contracts --rpc-url monad_testnet --account monad-deployer --broadcast -vvv",
+    "monad:verify": "test -n \"$REGISTRY_ADDRESS\" && forge verify-contract \"$REGISTRY_ADDRESS\" src/AgenticProofRegistry.sol:AgenticProofRegistry --root contracts --chain 10143 --verifier sourcify --verifier-url https://sourcify-api-monad.blockvision.org"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "concurrently": "^9.2.1",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,14 @@
+services:
+  agent:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    env_file:
+      - ../.env
+    ports:
+      - "8787:8787"
+    volumes:
+      - agentic-proof-data:/app/data
+
+volumes:
+  agentic-proof-data:

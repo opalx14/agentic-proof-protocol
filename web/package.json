@@ -1,0 +1,26 @@
+{
+  "name": "@agentic-proof/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 3000",
+    "build": "next build && mkdir -p .next/standalone/web/.next && cp -R .next/static .next/standalone/web/.next/static",
+    "start": "node .next/standalone/web/server.js",
+    "test": "bun test test"
+  },
+  "dependencies": {
+    "@agentic-proof/shared": "workspace:*",
+    "lucide-react": "^0.468.0",
+    "next": "^16.3.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "viem": "^2.40.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "^4.3.3"
+  }
+}
