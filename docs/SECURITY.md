@@ -61,6 +61,14 @@ The AI integration is intentionally capability-limited. The model may help reaso
 
 The MCP surface therefore contains exactly four non-signing tools: `agenticproof_get_status`, `agenticproof_evaluate_action`, `agenticproof_prepare_action`, and `agenticproof_verify_action`. A compromised or hallucinating model cannot obtain an owner-signing primitive from APP MCP because that primitive is not part of the tool surface.
 
+### Commerce challenge boundary
+
+Machine-readable payment/service challenges are treated as untrusted proposal input, not permission to pay. The commerce adapter binds `network`, `asset`, `payTo` and `resource` into the APP scope commitment and maps `amount` to the deterministic policy value. Redirecting the payee changes the scope hash; increasing the amount remains subject to the hard value cap. The adapter never accepts a wallet key, never signs and never broadcasts a settlement transaction.
+
+### Agent capability manifests
+
+Capability manifests are declarations, not authority. Their deterministic hash can be used as an agent `metadataHash` so another application can compare an advertised role/capability set with registry metadata, but the manifest cannot grant itself permissions. User authorization, deterministic policy and contract checks remain the enforcement boundaries.
+
 ## Replay and ambiguity
 
 - Authorization nonces are unique per user.

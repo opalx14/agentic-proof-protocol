@@ -30,10 +30,35 @@ For the public judge demo, the hosted Streamable HTTP MCP route is deployed but 
 | --- | --- | --- |
 | `agenticproof_get_status` | Read policy and public registry configuration | No |
 | `agenticproof_evaluate_action` | Evaluate a proposed action under deterministic policy | No |
-| `agenticproof_prepare_action` | Prepare action hash and transaction arguments | No |
+| `agenticproof_prepare_action` | Prepare action hash/transaction arguments, including a machine-readable commerce challenge adapter | No |
 | `agenticproof_verify_action` | Read onchain proof and optionally compare a supplied payload | No |
 
 There is **no MCP tool to grant/revoke authority, update policy, sign, transfer funds, attest a provider outcome or record a transaction**. The user wallet owns the authorization; the model only proposes.
+
+### Commerce challenge mode
+
+`agenticproof_prepare_action` can also receive a machine-readable service/payment challenge instead of a hand-built APP action. The adapter maps `network + asset + payTo + resource` into the action scope commitment, maps `amount` into the policy value, and produces a canonical `PAY_SERVICE` payload. This is inspired by HTTP 402-style agent-commerce flows, but APP intentionally stops before signing or settlement.
+
+Example shape:
+
+```json
+{
+  "authorizationId": "0x<32-byte-id>",
+  "commerceAgent": "0x<agent-address>",
+  "commerceNonce": "9",
+  "commerceChallenge": {
+    "version": "1",
+    "network": "monad-testnet",
+    "asset": "USDC6",
+    "payTo": "merchant:demo-airline",
+    "amount": "361000000",
+    "resource": "travel:SFO-SIN",
+    "requestId": "quote-361"
+  }
+}
+```
+
+The same deterministic controls still apply. A matching `PAY_SERVICE` policy/authorization is required for an automatic `ALLOW`; otherwise the challenge fails closed. A `$401` challenge can be blocked by the value cap, while changing only `payTo` changes the scope commitment so the original scoped policy no longer matches.
 
 ## Local stdio (no bearer token required)
 

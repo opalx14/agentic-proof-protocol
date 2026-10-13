@@ -35,7 +35,7 @@ The model is deliberately **not** the authority boundary.
 | Prepare canonical action data | Sign with the user wallet |
 | Verify an onchain action proof | Broadcast or record privileged transactions |
 
-APP exposes exactly four safe MCP tools: `agenticproof_get_status`, `agenticproof_evaluate_action`, `agenticproof_prepare_action`, and `agenticproof_verify_action`.
+APP exposes exactly four safe MCP tools: `agenticproof_get_status`, `agenticproof_evaluate_action`, `agenticproof_prepare_action`, and `agenticproof_verify_action`. The existing prepare tool also accepts a machine-readable commerce challenge and converts it into a policy-governed `PAY_SERVICE` action without adding a signing capability.
 
 ## Live evidence
 
@@ -71,11 +71,13 @@ This is intentional security behavior: APP does not expose a public signing agen
 
 ## Technical evidence
 
-- TypeScript/Bun suite: **48/48 PASS** in the current release candidate, including an in-memory MCP protocol client that lists the exact safe tool surface and proves `$361 → ALLOW` / `$401 → BLOCK` through the deterministic policy engine.
+- Core TypeScript/Bun suite: **54/54 PASS** in the current release candidate, including an in-memory MCP protocol client that lists the exact safe tool surface, proves `$361 → ALLOW` / `$401 → BLOCK`, and adapts a commerce challenge through the non-signing prepare path.
+- Packaged SDK smoke suite: **2/2 PASS**; `npm pack --dry-run` produces the `@agentic-proof/sdk@0.1.0` artifact with runtime bundle, type declarations and quick-start README without publishing it.
 - Foundry contract suite: **11/11 PASS**.
 - `bun run typecheck`, `bun run lint`, and `bun run build`: PASS in the current release candidate.
 - Public backend write route is blocked; hosted agent reports `signerReady=false`.
 - The verifier reads Monad RPC directly rather than trusting the agent backend to declare itself valid.
+- Specialist-agent manifests now bind agent address + declared role/capabilities into a deterministic metadata hash; manifests remain declarations, while policy + Monad authorization remain enforcement.
 
 See [README.md](README.md) for architecture and setup, [docs/SECURITY.md](docs/SECURITY.md) for threat boundaries, and [docs/MCP.md](docs/MCP.md) for AI-client integration.
 

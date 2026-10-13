@@ -71,6 +71,12 @@ Every highlight below has a test or live Monad Testnet evidence behind it.
 
 **6. The primitive is not travel-specific.** Travel (`BOOK_TRAVEL`) and Procurement (`PURCHASE_ITEM`) use the same hashing, policy and registry primitives without a protocol fork.
 
+**7. Agent commerce challenges are policy-bound before execution.** A machine-readable service/payment requirement can be converted into a `PAY_SERVICE` action that binds network, asset, payee and resource into the scope commitment. The amount is still checked against deterministic policy; changing the payee changes the scope and fails the original policy. APP does not sign or settle the payment.
+
+**8. Specialist agents can publish verifiable capability manifests.** The SDK can hash an agent address, role and declared action types into metadata suitable for the registry's `metadataHash`. This makes multi-agent roles explicit without turning the manifest itself into an authorization boundary.
+
+These two additions were independently implemented after reviewing public hackathon winner architectures: Latinum's agent-commerce payment challenge flow and Project Plutus's specialist-agent pattern. No Latinum source was copied; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Who this is for
 
 Primary users are **developers and teams operating autonomous agents that can trigger transactions or external services** and need a third party to verify the agent's authority without trusting the original backend.
@@ -136,6 +142,18 @@ Canonical vector logo / favicon: `web/app/icon.svg`.
 - `web/` — Next.js App Router product UI and independent direct-RPC verifier.
 - `infra/` — Docker build and runtime configuration.
 - `docs/` — public Monad integration and security documentation.
+
+## TypeScript SDK
+
+The repository now includes a judge-ready package artifact at [`sdk/`](sdk/) named `@agentic-proof/sdk`. It exposes canonical hashing, deterministic policy evaluation, EIP-712 authorization data, Monad proof reads, portable trust decisions, `PAY_SERVICE` commerce challenges and specialist-agent capability manifests without exposing signing or owner authority.
+
+```bash
+bun run sdk:build
+bun run sdk:test
+bun run sdk:pack
+```
+
+`npm pack --dry-run` verifies the release artifact without publishing it. See [`sdk/README.md`](sdk/README.md) for copy-paste quick starts.
 
 ## Connect AI agents via MCP
 
