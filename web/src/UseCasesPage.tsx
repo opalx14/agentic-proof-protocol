@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowUpRight, Bot, CheckCircle2, Fingerprint, LockKeyhole, Plane, ShieldCheck, ShoppingCart, ShieldAlert, Workflow } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Bot, CheckCircle2, Fingerprint, LockKeyhole, Plane, ShieldCheck, ShoppingCart, ShieldAlert, WalletCards, Workflow } from 'lucide-react';
 
 const LIVE_ACTION = '0x7606c8e32a09ffbcd524b37b6e82a27ecccd5c61ad8e7b4ed2d0162716f404cf';
 const PROOF_URL = `/verify/${LIVE_ACTION}`;
@@ -93,6 +93,21 @@ const cases = [
     boundary: 'The manifest is a verifiable declaration, not the enforcement boundary. Deterministic policy and the Monad registry still enforce authority.',
     cta: 'Inspect protocol architecture',
     href: '/lab',
+  },
+  {
+    index: '07',
+    tag: 'LOCAL-TESTED SMART SPENDING',
+    tone: 'reference',
+    icon: WalletCards,
+    name: 'Agentic smart spending vault',
+    subtitle: 'Enforce AI payment authority at the fund boundary.',
+    problem: 'A policy can say an AI may spend $400, but the payment account must still prevent redirection, replay, cumulative overspend and unauthorized executors.',
+    authority: 'PAY_SERVICE binds token, recipient and resource; the vault enforces revocation, expiry, per-call cap, cumulative budget and an owner-selected executor.',
+    proposal: 'An authorized $361 payment can record its APP proof and transfer value atomically. Wrong recipient, $401, replay, tampered resource or total spend above budget reverts.',
+    proof: 'Foundry covers the smart-spending boundary and the packaged SDK shares exact Solidity-compatible scope/action vectors. The vault is not claimed as live-deployed yet.',
+    boundary: 'This is a Monad-ready local-tested fund executor. The canonical live demo still uses the deployed registry and historical $361 proof until the owner separately signs a vault deployment.',
+    cta: 'Review vault source',
+    href: 'https://github.com/opalx14/agentic-proof-protocol/blob/main/contracts/src/AgenticSpendingVault.sol',
   },
 ] as const;
 

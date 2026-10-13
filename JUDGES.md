@@ -11,6 +11,7 @@ Agentic Proof Protocol (APP) is a user-owned authorization and evidence layer fo
 3. Click **Test tampered $399** → the same onchain action still exists, but the supplied payload no longer matches and the consumer returns `REJECT · PAYLOAD_MISMATCH`.
 4. Open the [interactive lab](https://monad.promptmarketcap.net/lab) and run the `$401` negative path → deterministic policy returns `BLOCK · VALUE_EXCEEDS_HARD_LIMIT` against the `$400` cap.
 5. Re-open the recorded proof after revocation → the action remains valid at action time, while current authorization is revoked and new-action trust returns `REJECT`.
+6. For a terminal-only smoke, run `bun run demo:judge` → it checks the live Monad proof, `$361/$399/$401`, merchant-scope binding and the SDK/Solidity smart-spending commitment vector without a wallet.
 
 ## The AI-native flow
 
@@ -78,7 +79,7 @@ This is intentional security behavior: APP does not expose a public signing agen
 - Public backend write route is blocked; hosted agent reports `signerReady=false`.
 - The verifier reads Monad RPC directly rather than trusting the agent backend to declare itself valid.
 - Specialist-agent manifests now bind agent address + declared role/capabilities into a deterministic metadata hash; manifests remain declarations, while policy + Monad authorization remain enforcement.
-- `AgenticSpendingVault` is implemented and locally verified as the fund-boundary enforcement layer. It is deliberately listed as local/tested until separately deployed; the canonical live evidence above remains the already-deployed registry flow.
+- `AgenticSpendingVault` is implemented and locally verified as the fund-boundary enforcement layer. It is deliberately listed as local/tested until separately deployed; the canonical live evidence above remains the already-deployed registry flow. Case 07 on `/use-cases` exposes this distinction explicitly to judges.
 
 See [README.md](README.md) for architecture and setup, [docs/SECURITY.md](docs/SECURITY.md) for threat boundaries, and [docs/MCP.md](docs/MCP.md) for AI-client integration.
 

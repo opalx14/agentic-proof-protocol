@@ -27,6 +27,7 @@
     "sdk:build": "bun run --cwd sdk build",
     "sdk:test": "bun run --cwd sdk test",
     "sdk:pack": "bun run --cwd sdk pack:check",
+    "demo:judge": "bun scripts/judge-demo.ts",
     "contracts:build": "forge build --root contracts",
     "contracts:test": "forge test --root contracts -vv",
     "monad:chain-id": "cast chain-id --rpc-url https://testnet-rpc.monad.xyz",

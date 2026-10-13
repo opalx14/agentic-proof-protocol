@@ -13,6 +13,7 @@ Agentic Proof Protocol (APP) is a user-owned authorization and evidence layer fo
 - **Interactive policy lab:** https://monad.promptmarketcap.net/lab
 - **AI/MCP connection guide:** https://monad.promptmarketcap.net/connect
 - **60-second judge walkthrough:** [JUDGES.md](JUDGES.md)
+- **One-command proof smoke:** `bun run demo:judge` — reads the canonical Monad proof directly, checks `$361`, tampered `$399`, `$401`, merchant binding and smart-spending commitment parity without a wallet.
 
 Three numbers tell the protocol story:
 
@@ -162,7 +163,7 @@ bun run sdk:pack
 APP exposes four non-signing MCP tools for status, deterministic policy evaluation, action preparation and independent onchain verification. The model can propose an action but cannot grant itself authority, revoke permissions, sign or broadcast a transaction.
 
 - **Connect Claude Code / Codex / Antigravity:** https://monad.promptmarketcap.net/connect
-- **Four explained case studies:** https://monad.promptmarketcap.net/use-cases
+- **Seven explained case studies:** https://monad.promptmarketcap.net/use-cases
 - **Local stdio:** `bun run dev:mcp` (requires local Agent API); safe `.mcp.json` and `.cursor/mcp.json` are included for MCP-aware IDEs
 - **Remote Streamable HTTP:** `POST /agent-api/mcp` with an owner-provisioned Bearer token; disabled by default until `APP_MCP_BEARER_TOKEN` is configured server-side
 - **Setup and security:** [docs/MCP.md](docs/MCP.md)

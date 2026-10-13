@@ -666,7 +666,7 @@ export default function App() {
           </p>
           <div className="hero-cta-row">
             <a className="primary nav-button" href={`/verify/${LIVE_PROOF.actionId}`}>Try live proof <ExternalLink size={15} /></a>
-            <a className="secondary nav-button" href="/use-cases">Explore 4 case studies <ExternalLink size={15} /></a>
+            <a className="secondary nav-button" href="/use-cases">Explore 7 case studies <ExternalLink size={15} /></a>
             <a className="secondary nav-button" href="/connect">Connect your AI <ExternalLink size={15} /></a>
           </div>
           <div className="hero-flow">
