@@ -71,13 +71,14 @@ This is intentional security behavior: APP does not expose a public signing agen
 
 ## Technical evidence
 
-- Core TypeScript/Bun suite: **54/54 PASS** in the current release candidate, including an in-memory MCP protocol client that lists the exact safe tool surface, proves `$361 → ALLOW` / `$401 → BLOCK`, and adapts a commerce challenge through the non-signing prepare path.
-- Packaged SDK smoke suite: **2/2 PASS**; `npm pack --dry-run` produces the `@agentic-proof/sdk@0.1.0` artifact with runtime bundle, type declarations and quick-start README without publishing it.
-- Foundry contract suite: **11/11 PASS**.
+- Core TypeScript/Bun suite: **56/56 PASS** in the current release candidate, including an in-memory MCP protocol client that lists the exact safe tool surface, proves `$361 → ALLOW` / `$401 → BLOCK`, adapts a commerce challenge through the non-signing prepare path, and verifies Solidity-compatible spending-scope commitments.
+- Packaged SDK smoke suite: **3/3 PASS**; `npm pack --dry-run` produces the `@agentic-proof/sdk@0.1.0` artifact with runtime bundle, type declarations and quick-start README without publishing it.
+- Foundry contract suite: **21/21 PASS**: 11 registry tests plus 10 `AgenticSpendingVault` tests covering authorized ERC-20 payment + atomic proof recording, wrong recipient, over-cap amount, revoked authorization, replay, single-use reuse, tampered resource, wrong action type, frozen agent, and SDK/Solidity scope-vector parity.
 - `bun run typecheck`, `bun run lint`, and `bun run build`: PASS in the current release candidate.
 - Public backend write route is blocked; hosted agent reports `signerReady=false`.
 - The verifier reads Monad RPC directly rather than trusting the agent backend to declare itself valid.
 - Specialist-agent manifests now bind agent address + declared role/capabilities into a deterministic metadata hash; manifests remain declarations, while policy + Monad authorization remain enforcement.
+- `AgenticSpendingVault` is implemented and locally verified as the fund-boundary enforcement layer. It is deliberately listed as local/tested until separately deployed; the canonical live evidence above remains the already-deployed registry flow.
 
 See [README.md](README.md) for architecture and setup, [docs/SECURITY.md](docs/SECURITY.md) for threat boundaries, and [docs/MCP.md](docs/MCP.md) for AI-client integration.
 

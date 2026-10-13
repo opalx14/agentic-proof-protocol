@@ -7,4 +7,5 @@ export * from './client';
 export * from './examples';
 export * from './commerce';
 export * from './agent-manifest';
+export * from './spending';
 export * from './trust';

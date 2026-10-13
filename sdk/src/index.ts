@@ -11,6 +11,10 @@ export {
   createAgentManifestHash,
   createRegistryReader,
   createScopeHash,
+  createSpendingActionHash,
+  createSpendingActionId,
+  createSpendingResourceHash,
+  createSpendingScopeHash,
   defaultPolicy,
   emptyHash,
   evaluatePolicy,
@@ -20,4 +24,6 @@ export {
   hashPayload,
   manifestAllowsAction,
   policyForScenario,
+  SPENDING_ACTION_DOMAIN,
+  SPENDING_SCOPE_DOMAIN,
 } from '../../shared/src/index.ts';

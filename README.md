@@ -75,7 +75,9 @@ Every highlight below has a test or live Monad Testnet evidence behind it.
 
 **8. Specialist agents can publish verifiable capability manifests.** The SDK can hash an agent address, role and declared action types into metadata suitable for the registry's `metadataHash`. This makes multi-agent roles explicit without turning the manifest itself into an authorization boundary.
 
-These two additions were independently implemented after reviewing public hackathon winner architectures: Latinum's agent-commerce payment challenge flow and Project Plutus's specialist-agent pattern. No Latinum source was copied; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+**9. A smart spending vault can enforce the authorization at the fund boundary.** `AgenticSpendingVault` is a local/tested Monad-ready contract that registers itself as the onchain agent, checks `PAY_SERVICE` authorization, recipient/resource scope, value cap, expiry and revocation, records the APP action proof, and transfers native/ERC-20 value atomically. Wrong recipient, over-cap amount, tampered resource, replay, single-use reuse and frozen-agent paths are covered by Foundry tests. This vault has not yet been claimed as a live deployed contract in the canonical demo.
+
+The commerce and specialist-agent additions were independently implemented after reviewing public hackathon winner architectures: Latinum's agent-commerce payment challenge flow and Project Plutus's specialist-agent pattern. The spending-vault design also adapts the capability-vault idea previously studied in NexusWallet while using APP's EVM/Monad authorization and proof model. No Latinum source was copied; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Who this is for
 
@@ -135,7 +137,7 @@ Canonical vector logo / favicon: `web/app/icon.svg`.
 
 ## Monorepo
 
-- `contracts/` — Solidity registry + Foundry tests.
+- `contracts/` — Solidity registry, policy-bound smart spending vault + Foundry tests.
 - `shared/` — TypeScript SDK, canonical hashing, policy engine, EIP-712 data, viem reader.
 - `agent/` — Fastify policy/control-plane API, idempotency, hash-chain audit, optional agent signer.
 - `mcp/` — restricted MCP surface for proposal/evaluation/preparation/verification.
@@ -145,7 +147,7 @@ Canonical vector logo / favicon: `web/app/icon.svg`.
 
 ## TypeScript SDK
 
-The repository now includes a judge-ready package artifact at [`sdk/`](sdk/) named `@agentic-proof/sdk`. It exposes canonical hashing, deterministic policy evaluation, EIP-712 authorization data, Monad proof reads, portable trust decisions, `PAY_SERVICE` commerce challenges and specialist-agent capability manifests without exposing signing or owner authority.
+The repository now includes a judge-ready package artifact at [`sdk/`](sdk/) named `@agentic-proof/sdk`. It exposes canonical hashing, deterministic policy evaluation, EIP-712 authorization data, Monad proof reads, portable trust decisions, `PAY_SERVICE` commerce challenges, specialist-agent capability manifests, and Solidity-compatible smart-spending scope/action commitments without exposing signing or owner authority.
 
 ```bash
 bun run sdk:build

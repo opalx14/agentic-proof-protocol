@@ -94,6 +94,39 @@ console.log(manifestAllowsAction(manifest, { agent, actionType: 'PAY_SERVICE' })
 
 The manifest hash can be used as `metadataHash` when registering an agent in `AgenticProofRegistry`; the manifest declares capabilities but does not grant spending authority by itself.
 
+## Quick start — smart spending scope
+
+```ts
+import {
+  createSpendingActionHash,
+  createSpendingActionId,
+  createSpendingScopeHash,
+} from '@agentic-proof/sdk';
+
+const scopeHash = createSpendingScopeHash({
+  chainId: 10143,
+  token: '0x2222222222222222222222222222222222222222',
+  recipient: '0x3333333333333333333333333333333333333333',
+  resource: 'travel:SFO-SIN',
+});
+
+const payment = {
+  chainId: 10143,
+  vault: '0x1111111111111111111111111111111111111111',
+  authorizationId: `0x${'44'.repeat(32)}`,
+  token: '0x2222222222222222222222222222222222222222',
+  recipient: '0x3333333333333333333333333333333333333333',
+  amount: 361_000_000n,
+  resource: 'travel:SFO-SIN',
+  paymentNonce: 1n,
+} as const;
+
+const actionId = createSpendingActionId(payment);
+const actionHash = createSpendingActionHash({ ...payment, actionId });
+```
+
+These helpers match `AgenticSpendingVault.sol`: recipient, token, resource, amount and nonce are bound into deterministic commitments before value can move.
+
 ## Quick start — independent Monad verifier
 
 ```ts
@@ -129,6 +162,7 @@ console.log(trust.verdict); // ACCEPT for the canonical historical payload
 - portable `ACCEPT / REJECT` proof-consumer policy;
 - machine-readable `PAY_SERVICE` commerce challenge adapter;
 - specialist-agent capability manifests and deterministic metadata hashes;
+- Solidity-compatible smart-spending scope/action commitments for `AgenticSpendingVault`;
 - reusable travel/procurement reference scenarios.
 
 ## Security boundary

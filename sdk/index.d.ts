@@ -195,6 +195,8 @@ export type RegistryReader = {
 export const AGENTIC_PROOF_ABI: readonly unknown[];
 export const TRAVEL_REFERENCE_SCENARIO: ReferenceScenario;
 export const PROCUREMENT_REFERENCE_SCENARIO: ReferenceScenario;
+export const SPENDING_SCOPE_DOMAIN: Hex32;
+export const SPENDING_ACTION_DOMAIN: Hex32;
 
 export function canonicalize(value: unknown): string;
 export function hashPayload(value: unknown): Hex32;
@@ -202,6 +204,34 @@ export function hashEvmValue(value: unknown): Hex32;
 export function hashActionType(actionType: string): Hex32;
 export function createScopeHash(scope: unknown): Hex32;
 export function createActionHash(payload: unknown): Hex32;
+export function createSpendingResourceHash(resource: string): Hex32;
+export function createSpendingScopeHash(input: {
+  chainId: bigint | number;
+  token: Address;
+  recipient: Address;
+  resource: string;
+}): Hex32;
+export function createSpendingActionId(input: {
+  chainId: bigint | number;
+  vault: Address;
+  authorizationId: Hex32;
+  token: Address;
+  recipient: Address;
+  amount: bigint;
+  resource: string;
+  paymentNonce: bigint;
+}): Hex32;
+export function createSpendingActionHash(input: {
+  chainId: bigint | number;
+  vault: Address;
+  authorizationId: Hex32;
+  actionId: Hex32;
+  token: Address;
+  recipient: Address;
+  amount: bigint;
+  resource: string;
+  paymentNonce: bigint;
+}): Hex32;
 export function emptyHash(): Hex32;
 
 export function evaluatePolicy(policy: Policy, action: ProposedAction, context?: PolicyEvaluationContext): PolicyDecision;

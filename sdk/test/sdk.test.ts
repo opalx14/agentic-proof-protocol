@@ -5,6 +5,9 @@ import {
   commerceChallengeToAction,
   createAgentManifest,
   createAgentManifestHash,
+  createSpendingActionHash,
+  createSpendingActionId,
+  createSpendingScopeHash,
   evaluatePolicy,
   manifestAllowsAction,
   policyForScenario,
@@ -24,6 +27,34 @@ describe('@agentic-proof/sdk package artifact', () => {
     expect(allowed.verdict).toBe('ALLOW');
     expect(blocked.verdict).toBe('BLOCK');
     expect(blocked.code).toBe('VALUE_EXCEEDS_HARD_LIMIT');
+  });
+
+  it('builds smart-spending commitments compatible with the vault contract', () => {
+    const token = '0x2222222222222222222222222222222222222222' as const;
+    const recipient = '0x3333333333333333333333333333333333333333' as const;
+    const authorizationId = `0x${'44'.repeat(32)}` as const;
+    const scopeHash = createSpendingScopeHash({
+      chainId: 10143,
+      token,
+      recipient,
+      resource: 'travel:SFO-SIN',
+    });
+    expect(scopeHash).toBe('0x38194844d6a4a8d71d7d8a1f73f08d1a06c9dd461fbba1c2f4eb6bd46101daf3');
+
+    const actionInput = {
+      chainId: 10143,
+      vault: agent,
+      authorizationId,
+      token,
+      recipient,
+      amount: 361_000_000n,
+      resource: 'travel:SFO-SIN',
+      paymentNonce: 1n,
+    };
+    const actionId = createSpendingActionId(actionInput);
+    const actionHash = createSpendingActionHash({ ...actionInput, actionId });
+    expect(actionId).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(actionHash).toMatch(/^0x[0-9a-f]{64}$/);
   });
 
   it('binds a commerce payment to its payee and creates deterministic agent metadata', () => {
