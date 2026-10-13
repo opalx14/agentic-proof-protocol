@@ -1,10 +1,28 @@
 # Agentic Proof Protocol
 
-**Verifiable authority for AI agents.**
+**Before an AI agent spends money or triggers a real action, prove what the user actually authorized.**
 
-Agentic Proof Protocol (APP) is a user-owned authorization and proof layer for autonomous AI agents on Monad. A user grants narrowly-scoped authority, an AI agent proposes an action, deterministic policy decides whether it can proceed, and Monad records the authority plus a tamper-evident action commitment that another application can verify independently.
+Agentic Proof Protocol (APP) is a user-owned authorization and evidence layer for autonomous AI agents on Monad. An AI agent can propose an action, but deterministic policy decides whether it can proceed; Monad records scoped authority plus a tamper-evident action commitment; any application can verify the proof independently.
 
-> **The model proposes. The protocol authorizes.**
+> **AI proposes. Deterministic policy authorizes. Monad records the proof. Anyone can verify.**
+
+## ⚡ 30-second judge quick start
+
+- **Live product:** https://monad.promptmarketcap.net/
+- **No-wallet canonical proof:** https://monad.promptmarketcap.net/verify/0x7606c8e32a09ffbcd524b37b6e82a27ecccd5c61ad8e7b4ed2d0162716f404cf
+- **Interactive policy lab:** https://monad.promptmarketcap.net/lab
+- **AI/MCP connection guide:** https://monad.promptmarketcap.net/connect
+- **60-second judge walkthrough:** [JUDGES.md](JUDGES.md)
+
+Three numbers tell the protocol story:
+
+| Demo case | Result | Meaning |
+| --- | --- | --- |
+| `$361` original action | `ALLOW` + historical `ACCEPT` | It was within the `$400` policy cap and the supplied payload matches the onchain commitment. |
+| `$399` tampered payload | `REJECT · PAYLOAD_MISMATCH` | A modified payload cannot reuse the original proof. |
+| `$401` proposal | `BLOCK · VALUE_EXCEEDS_HARD_LIMIT` | Model output cannot override deterministic policy. |
+
+The recorded authorization was later revoked. Its historical `$361` action still verifies as valid-at-action-time, while current authority is inactive and new actions are rejected.
 
 ## The problem
 
@@ -123,8 +141,8 @@ Canonical vector logo / favicon: `web/app/icon.svg`.
 
 APP exposes four non-signing MCP tools for status, deterministic policy evaluation, action preparation and independent onchain verification. The model can propose an action but cannot grant itself authority, revoke permissions, sign or broadcast a transaction.
 
-- **Connect Claude Code / Codex / Antigravity:** `/connect` (after deployment)
-- **Four explained case studies:** `/use-cases` (after deployment)
+- **Connect Claude Code / Codex / Antigravity:** https://monad.promptmarketcap.net/connect
+- **Four explained case studies:** https://monad.promptmarketcap.net/use-cases
 - **Local stdio:** `bun run dev:mcp` (requires local Agent API); safe `.mcp.json` and `.cursor/mcp.json` are included for MCP-aware IDEs
 - **Remote Streamable HTTP:** `POST /agent-api/mcp` with an owner-provisioned Bearer token; disabled by default until `APP_MCP_BEARER_TOKEN` is configured server-side
 - **Setup and security:** [docs/MCP.md](docs/MCP.md)
